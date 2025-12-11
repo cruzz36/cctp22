@@ -16,12 +16,10 @@ def validateMission(mission_data):
         "rover_id": string (obrigatório),
         "geographic_area": dict (obrigatório),
         "task": string (obrigatório: capture_images|sample_collection|environmental_analysis|...),
-        "duration_minutes": integer (obrigatório, > 0),
-        "update_frequency_seconds": integer (obrigatório, > 0)
+        "duration_minutes": integer (obrigatório, > 0)
     }
     
     Campos opcionais:
-    - "priority": string (low|medium|high)
     - "instructions": string
     
     Args:
@@ -46,8 +44,7 @@ def validateMission(mission_data):
         "rover_id": str,
         "geographic_area": dict,
         "task": str,
-        "duration_minutes": (int, float),
-        "update_frequency_seconds": (int, float)
+        "duration_minutes": (int, float)
     }
     
     # Verificar presença e tipo dos campos obrigatórios
@@ -61,9 +58,6 @@ def validateMission(mission_data):
     # Validações específicas
     if mission_data["duration_minutes"] <= 0:
         return False, "duration_minutes deve ser maior que 0"
-    
-    if mission_data["update_frequency_seconds"] <= 0:
-        return False, "update_frequency_seconds deve ser maior que 0"
     
     # Validar geographic_area
     geo_area = mission_data["geographic_area"]
@@ -350,7 +344,6 @@ class NMS_Agent:
             "geographic_area": {"x1": float, "y1": float, "x2": float, "y2": float},
             "task": string (obrigatório),
             "duration_minutes": integer (obrigatório, > 0),
-            "update_frequency_seconds": integer (obrigatório, > 0)
         }
         
         NOTA: O idAgent é usado apenas no handshake. Nas mensagens de dados,
@@ -413,7 +406,6 @@ class NMS_Agent:
         """
         mission_id = mission_data.get("mission_id", "unknown")
         duration_minutes = mission_data.get("duration_minutes", 30)
-        update_frequency_seconds = mission_data.get("update_frequency_seconds", 120)
         geographic_area = mission_data.get("geographic_area", {})
         task = mission_data.get("task", "unknown")
         
@@ -460,9 +452,10 @@ class NMS_Agent:
         self.updateOperationalStatus("em missão")
         self.updateVelocity(2.0)  # Velocidade reduzida durante execução
         
-        # Calcular número de atualizações durante a missão
+        # Calcular número de atualizações durante a missão (usar intervalo fixo de 30s)
         total_duration_seconds = duration_minutes * 60
-        num_updates = max(1, int(total_duration_seconds / update_frequency_seconds))
+        update_interval_seconds = 30  # Intervalo fixo de 30 segundos (mesmo da telemetria contínua)
+        num_updates = max(1, int(total_duration_seconds / update_interval_seconds))
         
         # Executar missão com atualizações periódicas de posição e estado
         # A telemetria contínua (30s) continua a correr em paralelo
@@ -502,9 +495,9 @@ class NMS_Agent:
             
             # NÃO enviar telemetria aqui - a telemetria contínua (30s) já faz isso
             
-            # Aguardar até próxima atualização
+            # Aguardar até próxima atualização (intervalo fixo de 30s)
             if update_idx < num_updates - 1:
-                time.sleep(update_frequency_seconds)
+                time.sleep(update_interval_seconds)
         
         # Missão concluída
         self.updateOperationalStatus("parado")
@@ -588,6 +581,12 @@ class NMS_Agent:
             "operational_status": self.operational_status,
             "timestamp": datetime.now().isoformat()  # Adicionar timestamp ISO 8601
         }
+        
+        # Adicionar ID da missão atual (se houver)
+        if self.current_mission and isinstance(self.current_mission, dict):
+            telemetry["mission_id"] = self.current_mission.get("mission_id", "N/A")
+        else:
+            telemetry["mission_id"] = "N/A"
         
         # Adicionar campos opcionais
         telemetry["battery"] = self.battery

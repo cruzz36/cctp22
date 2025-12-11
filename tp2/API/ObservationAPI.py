@@ -428,13 +428,10 @@ class ObservationAPI:
             "task": mission_data.get("task", "unknown"),
             "status": status,
             "geographic_area": mission_data.get("geographic_area", {}),
-            "duration_minutes": mission_data.get("duration_minutes", 0),
-            "update_frequency_seconds": mission_data.get("update_frequency_seconds", 0)
+            "duration_minutes": mission_data.get("duration_minutes", 0)
         }
         
         # Adicionar campos opcionais se existirem
-        if "priority" in mission_data:
-            mission_info["priority"] = mission_data["priority"]
         if "instructions" in mission_data:
             mission_info["instructions"] = mission_data["instructions"]
         

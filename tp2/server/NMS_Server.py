@@ -16,12 +16,10 @@ def validateMission(mission_data):
         "rover_id": string (obrigatório),
         "geographic_area": dict (obrigatório),
         "task": string (obrigatório: capture_images|sample_collection|environmental_analysis|...),
-        "duration_minutes": integer (obrigatório, > 0),
-        "update_frequency_seconds": integer (obrigatório, > 0)
+        "duration_minutes": integer (obrigatório, > 0)
     }
     
     Campos opcionais:
-    - "priority": string (low|medium|high)
     - "instructions": string
     
     Args:
@@ -46,8 +44,7 @@ def validateMission(mission_data):
         "rover_id": str,
         "geographic_area": dict,
         "task": str,
-        "duration_minutes": (int, float),
-        "update_frequency_seconds": (int, float)
+        "duration_minutes": (int, float)
     }
     
     # Verificar presença e tipo dos campos obrigatórios
@@ -61,9 +58,6 @@ def validateMission(mission_data):
     # Validações específicas
     if mission_data["duration_minutes"] <= 0:
         return False, "duration_minutes deve ser maior que 0"
-    
-    if mission_data["update_frequency_seconds"] <= 0:
-        return False, "update_frequency_seconds deve ser maior que 0"
     
     # Validar geographic_area
     geo_area = mission_data["geographic_area"]
@@ -280,8 +274,6 @@ class NMS_Server:
             },
             "task": string (obrigatório: capture_images|sample_collection|environmental_analysis|...),
             "duration_minutes": integer (obrigatório, > 0),
-            "update_frequency_seconds": integer (obrigatório, > 0),
-            "priority": string (opcional: low|medium|high),
             "instructions": string (opcional)
         }
         
@@ -488,8 +480,7 @@ class NMS_Server:
                 "rover_id": "r1",
                 "geographic_area": {"x1": 10.0, "y1": 20.0, "x2": 50.0, "y2": 60.0},
                 "task": "capture_images",
-                "duration_minutes": 30,
-                "update_frequency_seconds": 120
+                "duration_minutes": 30
             },
             ...
         ]

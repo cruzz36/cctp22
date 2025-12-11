@@ -250,16 +250,12 @@ class GroundControl:
             status = mission.get('status', 'N/A')
             geo_area = mission.get('geographic_area', {})
             duration = mission.get('duration_minutes', 0)
-            update_freq = mission.get('update_frequency_seconds', 0)
-            priority = mission.get('priority', 'N/A')
             
             print(f"\nMissão ID: {mission_id}")
             print(f"  Rover:              {rover_id}")
             print(f"  Tarefa:             {task}")
             print(f"  Estado:             {status}")
             print(f"  Duração:            {duration} minutos")
-            print(f"  Frequência Update:  {update_freq} segundos")
-            print(f"  Prioridade:         {priority}")
             
             if geo_area:
                 x1 = geo_area.get('x1', 0)
@@ -294,8 +290,6 @@ class GroundControl:
         print(f"  Tarefa:             {data.get('task', 'N/A')}")
         print(f"  Estado:             {data.get('status', 'N/A')}")
         print(f"  Duração:            {data.get('duration_minutes', 0)} minutos")
-        print(f"  Frequência Update:  {data.get('update_frequency_seconds', 0)} segundos")
-        print(f"  Prioridade:         {data.get('priority', 'N/A')}")
         
         geo_area = data.get('geographic_area', {})
         if geo_area:
