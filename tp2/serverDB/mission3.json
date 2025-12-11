@@ -1,0 +1,14 @@
+{
+  "mission_id": "M-003",
+  "rover_id": "r2",
+  "geographic_area": {
+    "x1": 200.0,
+    "y1": 100.0,
+    "x2": 280.0,
+    "y2": 180.0
+  },
+  "task": "environmental_analysis",
+  "duration_minutes": 45,
+  "update_frequency_seconds": 180
+}
+

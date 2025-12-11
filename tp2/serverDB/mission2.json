@@ -1,0 +1,13 @@
+{
+  "mission_id": "M-002",
+  "rover_id": "r2",
+  "geographic_area": {
+    "x1": 75.0,
+    "y1": 125.0,
+    "x2": 125.0,
+    "y2": 175.0
+  },
+  "task": "sample_collection",
+  "duration_minutes": 20,
+  "update_frequency_seconds": 90
+}

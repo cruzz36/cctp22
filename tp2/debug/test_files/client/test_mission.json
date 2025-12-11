@@ -1,0 +1,13 @@
+{
+  "mission_id": "M-TEST",
+  "rover_id": "r1",
+  "geographic_area": {
+    "x1": 10.0,
+    "y1": 20.0,
+    "x2": 50.0,
+    "y2": 60.0
+  },
+  "task": "capture_images",
+  "duration_minutes": 30,
+  "update_frequency_seconds": 120
+}

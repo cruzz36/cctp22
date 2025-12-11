@@ -1,0 +1,12 @@
+{
+    "task_id":"task_202",
+    "devices":[
+        {
+            "device_id":"n1",
+            "bandwidth":"18 Mbit/sec",
+            "jitter":"2000ms",
+            "packet_loss":"20%",
+            "latency":"14 ms"
+        }
+    ]
+}

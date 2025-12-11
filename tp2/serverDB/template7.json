@@ -1,0 +1,13 @@
+{
+  "rover_id": "r2",
+  "position": {
+    "x": 220.0,
+    "y": 120.0,
+    "z": 0.0
+  },
+  "operational_status": "em missão",
+  "battery": 82,
+  "velocity": 1.7,
+  "system_health": "operacional",
+  "temperature": 24.2
+}

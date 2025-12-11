@@ -1,0 +1,85 @@
+[
+  {
+    "task_id": "task-202",
+    "frequency": 20,
+    "devices": [
+      {
+        "device_id": "r1",
+          "device_metrics": {
+            "cpu_usage": true,
+            "ram_usage": true,
+            "interface_stats": ["eth0", "eth1", "eth2"]
+          },
+          "link_metrics": {
+            "bandwidth": {
+              "enabled": true,
+              "role": "c",
+              "server_address": "192.168.1.1",
+              "test_duration": 10,
+              "transport_type": "TCP",
+              "frequency": 30,
+              "jitter": {
+                "enabled": true,
+                "frequency": 10
+              },
+              "packet_loss": {
+                "enabled": true,
+                "frequency": 15
+              },
+              "latency": {
+                "enabled": true,
+                "destination": "192.168.1.2",
+                "packet_count": 100,
+                "frequency": 20
+              }
+            }
+          },
+          "telemetry_stream_conditions": {
+            "cpu_usage": 80,
+            "ram_usage": 90,
+            "interface_stats": 2000,
+            "packet_loss": 5,
+            "jitter": 100
+          }
+        },
+        {
+          "device_id": "r2",
+          "device_metrics": {
+            "cpu_usage": false,
+            "ram_usage": true,
+            "interface_stats": ["eth0", "eth3"]
+          },
+          "link_metrics": {
+            "bandwidth": {
+              "enabled": true,
+              "role": "s",
+              "server_address": "192.168.1.2",
+              "test_duration": 15,
+              "transport_type": "UDP",
+              "frequency": 60,
+              "jitter": {
+                "enabled": false
+              },
+              "packet_loss": {
+                "enabled": true,
+                "frequency": 20
+              },
+              "latency": {
+                "enabled": true,
+                "destination": "192.168.1.1",
+                "packet_count": 50,
+                "frequency": 20
+              }
+            }
+          },
+          "telemetry_stream_conditions": {
+            "cpu_usage": 75,
+            "ram_usage": 85,
+            "interface_stats": 1500,
+            "packet_loss": 3,
+            "jitter": 120
+          }
+        }
+      ]
+  }  
+]

@@ -1,0 +1,601 @@
+"""
+API de Observação para a Nave-Mãe
+
+Implementa uma API REST HTTP para disponibilizar informação sobre missões e estado dos rovers.
+Permite consulta em tempo real ou próximo do tempo real do estado atual do sistema.
+
+Requisitos do PDF:
+- Lista de rovers ativos e respetivo estado atual
+- Lista de missões (ativas e concluídas), incluindo parâmetros principais
+- Últimos dados de telemetria recebidos pela Nave-Mãe
+
+Formato: JSON
+Protocolo: HTTP REST
+Porta padrão: 8082
+"""
+
+try:
+    from flask import Flask, jsonify, request  # type: ignore
+    FLASK_AVAILABLE = True
+except ImportError:
+    FLASK_AVAILABLE = False
+    # Stubs para evitar erros de sintaxe quando Flask não está instalado
+    class Flask:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+        def route(self, *args, **kwargs): return lambda f: f
+        def run(self, *args, **kwargs): pass
+    def jsonify(*args, **kwargs): return {}  # type: ignore
+    class request:  # type: ignore
+        class args:
+            @staticmethod
+            def get(key, default=None): return default
+
+import json
+import os
+import threading
+from datetime import datetime
+from typing import Dict, List, Optional
+
+class ObservationAPI:
+    """
+    API de Observação para a Nave-Mãe.
+    Expõe endpoints REST para consulta de estado do sistema.
+    """
+    
+    def __init__(self, nms_server, host='0.0.0.0', port=8082):
+        """
+        Inicializa a API de Observação.
+        
+        Args:
+            nms_server (NMS_Server): Instância do servidor NMS para aceder aos dados
+            host (str, optional): Endereço IP para escutar. Defaults to '0.0.0.0' (todas as interfaces)
+            port (int, optional): Porta para escutar. Defaults to 8082
+            
+        Raises:
+            ImportError: Se Flask não estiver instalado
+        """
+        if not FLASK_AVAILABLE:
+            raise ImportError(
+                "Flask não está instalado. Instale com: pip install flask\n"
+                "Ou instale todas as dependências: pip install -r requirements.txt"
+            )
+        
+        self.nms_server = nms_server
+        self.host = host
+        self.port = port
+        self.app = Flask(__name__)
+        self._setup_routes()
+        self._api_thread = None
+        self._running = False
+    
+    def _setup_routes(self):
+        """
+        Configura as rotas da API REST.
+        """
+        # Rota raiz - informação da API
+        @self.app.route('/', methods=['GET'])
+        def root():
+            """Informação sobre a API de Observação."""
+            return jsonify({
+                "api": "NMS Observation API",
+                "version": "1.0",
+                "status": "online",
+                "description": "API de Observação da Nave-Mãe para consulta de estado do sistema",
+                "endpoints": {
+                    "/rovers": "Lista de rovers ativos e respetivo estado",
+                    "/rovers/<rover_id>": "Estado detalhado de um rover específico",
+                    "/missions": "Lista de missões (ativas e concluídas)",
+                    "/missions/<mission_id>": "Detalhes de uma missão específica",
+                    "/telemetry": "Últimos dados de telemetria recebidos",
+                    "/telemetry/<rover_id>": "Últimos dados de telemetria de um rover específico",
+                    "/status": "Estado geral do sistema"
+                }
+            }), 200
+        
+        # Endpoint de health check
+        @self.app.route('/health', methods=['GET'])
+        def health():
+            """Health check endpoint para verificar se a API está a funcionar."""
+            return jsonify({
+                "status": "healthy",
+                "api": "NMS Observation API",
+                "timestamp": datetime.now().isoformat()
+            }), 200
+        
+        # Lista de rovers ativos
+        @self.app.route('/rovers', methods=['GET'])
+        def get_rovers():
+            """
+            Retorna lista de rovers ativos e respetivo estado atual.
+            
+            Returns:
+                JSON com lista de rovers:
+                {
+                    "rovers": [
+                        {
+                            "rover_id": "r1",
+                            "ip": "10.0.3.10",
+                            "status": "active",
+                            "last_seen": "2024-01-01T12:00:00",
+                            "current_mission": "M-001" ou null
+                        }
+                    ]
+                }
+            """
+            rovers = []
+            for rover_id, ip in self.nms_server.agents.items():
+                rover_info = {
+                    "rover_id": rover_id,
+                    "ip": ip,
+                    "status": "active",  # Rovers registados são considerados ativos
+                    "last_seen": self._get_last_telemetry_time(rover_id),
+                    "current_mission": self._get_current_mission(rover_id)
+                }
+                rovers.append(rover_info)
+            
+            return jsonify({"rovers": rovers}), 200
+        
+        # Estado detalhado de um rover específico
+        @self.app.route('/rovers/<rover_id>', methods=['GET'])
+        def get_rover(rover_id):
+            """
+            Retorna estado detalhado de um rover específico.
+            
+            Args:
+                rover_id (str): ID do rover
+                
+            Returns:
+                JSON com estado detalhado do rover ou 404 se não encontrado
+            """
+            if rover_id not in self.nms_server.agents:
+                return jsonify({"error": f"Rover {rover_id} não encontrado"}), 404
+            
+            ip = self.nms_server.agents[rover_id]
+            latest_telemetry = self._get_latest_telemetry(rover_id)
+            current_mission = self._get_current_mission(rover_id)
+            mission_progress = self._get_mission_progress(rover_id, current_mission)
+            
+            rover_data = {
+                "rover_id": rover_id,
+                "ip": ip,
+                "status": "active",
+                "last_seen": self._get_last_telemetry_time(rover_id),
+                "current_mission": current_mission,
+                "mission_progress": mission_progress,
+                "latest_telemetry": latest_telemetry
+            }
+            
+            return jsonify(rover_data), 200
+        
+        # Lista de missões
+        @self.app.route('/missions', methods=['GET'])
+        def get_missions():
+            """
+            Retorna lista de missões (ativas e concluídas), incluindo parâmetros principais.
+            
+            Query parameters:
+                - status: Filtrar por status (active, completed, pending). Se não especificado, retorna todas.
+            
+            Returns:
+                JSON com lista de missões:
+                {
+                    "missions": [
+                        {
+                            "mission_id": "M-001",
+                            "rover_id": "r1",
+                            "task": "capture_images",
+                            "status": "active",
+                            "geographic_area": {...},
+                            "duration_minutes": 30,
+                            "progress": {...}
+                        }
+                    ]
+                }
+            """
+            status_filter = request.args.get('status', None)
+            missions = []
+            
+            # Missões ativas (em self.tasks)
+            for mission_id, mission_data in self.nms_server.tasks.items():
+                mission_info = self._format_mission(mission_id, mission_data)
+                if status_filter is None or mission_info["status"] == status_filter:
+                    missions.append(mission_info)
+            
+            # Missões pendentes
+            for mission_data in self.nms_server.pendingMissions:
+                if isinstance(mission_data, str):
+                    try:
+                        mission_data = json.loads(mission_data)
+                    except:
+                        continue
+                
+                mission_id = mission_data.get("mission_id", "unknown")
+                mission_info = self._format_mission(mission_id, mission_data)
+                mission_info["status"] = "pending"
+                
+                if status_filter is None or mission_info["status"] == status_filter:
+                    missions.append(mission_info)
+            
+            return jsonify({"missions": missions}), 200
+        
+        # Detalhes de uma missão específica
+        @self.app.route('/missions/<mission_id>', methods=['GET'])
+        def get_mission(mission_id):
+            """
+            Retorna detalhes completos de uma missão específica.
+            
+            Args:
+                mission_id (str): ID da missão
+                
+            Returns:
+                JSON com detalhes da missão ou 404 se não encontrada
+            """
+            # Procurar em missões ativas
+            if mission_id in self.nms_server.tasks:
+                mission_data = self.nms_server.tasks[mission_id]
+                if isinstance(mission_data, str):
+                    try:
+                        mission_data = json.loads(mission_data)
+                    except:
+                        return jsonify({"error": "Erro ao fazer parse da missão"}), 500
+                
+                mission_info = self._format_mission(mission_id, mission_data)
+                mission_info["progress"] = self.nms_server.missionProgress.get(mission_id, {})
+                return jsonify(mission_info), 200
+            
+            # Procurar em missões pendentes
+            for mission_data in self.nms_server.pendingMissions:
+                if isinstance(mission_data, str):
+                    try:
+                        mission_data = json.loads(mission_data)
+                    except:
+                        continue
+                
+                if mission_data.get("mission_id") == mission_id:
+                    mission_info = self._format_mission(mission_id, mission_data)
+                    mission_info["status"] = "pending"
+                    return jsonify(mission_info), 200
+            
+            return jsonify({"error": f"Missão {mission_id} não encontrada"}), 404
+        
+        # Últimos dados de telemetria
+        @self.app.route('/telemetry', methods=['GET'])
+        def get_telemetry():
+            """
+            Retorna últimos dados de telemetria recebidos pela Nave-Mãe.
+            
+            Query parameters:
+                - limit: Número máximo de registos a retornar (default: 10)
+                - rover_id: Filtrar por rover específico (opcional)
+            
+            Returns:
+                JSON com lista de dados de telemetria:
+                {
+                    "telemetry": [
+                        {
+                            "rover_id": "r1",
+                            "timestamp": "2024-01-01T12:00:00",
+                            "position": {...},
+                            "operational_status": "em missão",
+                            "battery": 75.0,
+                            ...
+                        }
+                    ]
+                }
+            """
+            limit = int(request.args.get('limit', 10))
+            rover_filter = request.args.get('rover_id', None)
+            
+            telemetry_data = self._get_telemetry_data(limit, rover_filter)
+            
+            return jsonify({"telemetry": telemetry_data}), 200
+        
+        # Últimos dados de telemetria de um rover específico
+        @self.app.route('/telemetry/<rover_id>', methods=['GET'])
+        def get_rover_telemetry(rover_id):
+            """
+            Retorna últimos dados de telemetria de um rover específico.
+            
+            Args:
+                rover_id (str): ID do rover
+                
+            Query parameters:
+                - limit: Número máximo de registos a retornar (default: 10)
+            
+            Returns:
+                JSON com lista de dados de telemetria do rover ou 404 se não encontrado
+            """
+            if rover_id not in self.nms_server.agents:
+                return jsonify({"error": f"Rover {rover_id} não encontrado"}), 404
+            
+            limit = int(request.args.get('limit', 10))
+            telemetry_data = self._get_telemetry_data(limit, rover_id)
+            
+            return jsonify({"rover_id": rover_id, "telemetry": telemetry_data}), 200
+        
+        # Estado geral do sistema
+        @self.app.route('/status', methods=['GET'])
+        def get_status():
+            """
+            Retorna estado geral do sistema.
+            
+            Returns:
+                JSON com estatísticas gerais:
+                {
+                    "total_rovers": 3,
+                    "active_rovers": 3,
+                    "total_missions": 5,
+                    "active_missions": 2,
+                    "pending_missions": 1,
+                    "completed_missions": 2
+                }
+            """
+            total_rovers = len(self.nms_server.agents)
+            active_missions = len(self.nms_server.tasks)
+            pending_missions = len(self.nms_server.pendingMissions)
+            
+            # Contar missões concluídas (missões com progresso "completed")
+            completed_missions = 0
+            for mission_id, progress in self.nms_server.missionProgress.items():
+                if isinstance(progress, dict):
+                    for rover_id, rover_progress in progress.items():
+                        if isinstance(rover_progress, dict) and rover_progress.get("status") == "completed":
+                            completed_missions += 1
+                            break
+            
+            status = {
+                "total_rovers": total_rovers,
+                "active_rovers": total_rovers,  # Rovers registados são considerados ativos
+                "total_missions": active_missions + pending_missions + completed_missions,
+                "active_missions": active_missions,
+                "pending_missions": pending_missions,
+                "completed_missions": completed_missions,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            return jsonify(status), 200
+    
+    def _format_mission(self, mission_id: str, mission_data: dict) -> dict:
+        """
+        Formata dados de uma missão para resposta da API.
+        
+        Args:
+            mission_id (str): ID da missão
+            mission_data (dict): Dados da missão
+            
+        Returns:
+            dict: Dados formatados da missão
+        """
+        if isinstance(mission_data, str):
+            try:
+                mission_data = json.loads(mission_data)
+            except:
+                mission_data = {}
+        
+        # Determinar status da missão
+        status = "active"
+        if mission_id in self.nms_server.missionProgress:
+            progress = self.nms_server.missionProgress[mission_id]
+            if isinstance(progress, dict):
+                for rover_progress in progress.values():
+                    if isinstance(rover_progress, dict) and rover_progress.get("status") == "completed":
+                        status = "completed"
+                        break
+        
+        mission_info = {
+            "mission_id": mission_id,
+            "rover_id": mission_data.get("rover_id", "unknown"),
+            "task": mission_data.get("task", "unknown"),
+            "status": status,
+            "geographic_area": mission_data.get("geographic_area", {}),
+            "duration_minutes": mission_data.get("duration_minutes", 0),
+            "update_frequency_seconds": mission_data.get("update_frequency_seconds", 0)
+        }
+        
+        # Adicionar campos opcionais se existirem
+        if "priority" in mission_data:
+            mission_info["priority"] = mission_data["priority"]
+        if "instructions" in mission_data:
+            mission_info["instructions"] = mission_data["instructions"]
+        
+        return mission_info
+    
+    def _get_current_mission(self, rover_id: str) -> Optional[str]:
+        """
+        Obtém a missão atual de um rover.
+        
+        Args:
+            rover_id (str): ID do rover
+            
+        Returns:
+            str or None: ID da missão atual ou None se não houver
+        """
+        for mission_id, mission_data in self.nms_server.tasks.items():
+            if isinstance(mission_data, str):
+                try:
+                    mission_data = json.loads(mission_data)
+                except:
+                    continue
+            
+            if mission_data.get("rover_id") == rover_id:
+                return mission_id
+        
+        return None
+    
+    def _get_mission_progress(self, rover_id: str, mission_id: Optional[str]) -> Optional[dict]:
+        """
+        Obtém progresso da missão atual de um rover.
+        
+        Args:
+            rover_id (str): ID do rover
+            mission_id (str or None): ID da missão
+            
+        Returns:
+            dict or None: Dados de progresso ou None
+        """
+        if mission_id is None:
+            return None
+        
+        progress = self.nms_server.missionProgress.get(mission_id, {})
+        if isinstance(progress, dict):
+            return progress.get(rover_id)
+        
+        return None
+    
+    def _get_latest_telemetry(self, rover_id: str) -> Optional[dict]:
+        """
+        Obtém os últimos dados de telemetria de um rover.
+        
+        Args:
+            rover_id (str): ID do rover
+            
+        Returns:
+            dict or None: Últimos dados de telemetria ou None
+        """
+        telemetry_folder = self.nms_server.telemetryStream.storefolder
+        rover_folder = os.path.join(telemetry_folder, rover_id)
+        
+        if not os.path.exists(rover_folder):
+            return None
+        
+        # Procurar ficheiro mais recente
+        try:
+            files = [f for f in os.listdir(rover_folder) if f.endswith('.json')]
+            if not files:
+                return None
+            
+            # Ordenar por data de modificação (mais recente primeiro)
+            files.sort(key=lambda x: os.path.getmtime(os.path.join(rover_folder, x)), reverse=True)
+            latest_file = os.path.join(rover_folder, files[0])
+            
+            with open(latest_file, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Erro ao ler telemetria de {rover_id}: {e}")
+            return None
+    
+    def _get_telemetry_data(self, limit: int, rover_filter: Optional[str] = None) -> List[dict]:
+        """
+        Obtém dados de telemetria (últimos N registos).
+        
+        Args:
+            limit (int): Número máximo de registos
+            rover_filter (str, optional): Filtrar por rover específico
+            
+        Returns:
+            list: Lista de dados de telemetria
+        """
+        telemetry_folder = self.nms_server.telemetryStream.storefolder
+        telemetry_data = []
+        
+        # Se filtro por rover, procurar apenas na pasta desse rover
+        if rover_filter:
+            rover_folder = os.path.join(telemetry_folder, rover_filter)
+            if os.path.exists(rover_folder):
+                files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
+                for file_path in sorted(files, key=os.path.getmtime, reverse=True)[:limit]:
+                    try:
+                        with open(file_path, 'r') as f:
+                            data = json.load(f)
+                            data["timestamp"] = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+                            telemetry_data.append(data)
+                    except:
+                        continue
+        else:
+            # Procurar em todas as pastas de rovers
+            if os.path.exists(telemetry_folder):
+                for rover_id in os.listdir(telemetry_folder):
+                    rover_folder = os.path.join(telemetry_folder, rover_id)
+                    if os.path.isdir(rover_folder):
+                        files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
+                        for file_path in sorted(files, key=os.path.getmtime, reverse=True)[:limit]:
+                            try:
+                                with open(file_path, 'r') as f:
+                                    data = json.load(f)
+                                    data["timestamp"] = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+                                    telemetry_data.append(data)
+                            except:
+                                continue
+        
+        # Ordenar por timestamp e limitar
+        telemetry_data.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        return telemetry_data[:limit]
+    
+    def _get_last_telemetry_time(self, rover_id: str) -> Optional[str]:
+        """
+        Obtém timestamp da última telemetria recebida de um rover.
+        
+        Args:
+            rover_id (str): ID do rover
+            
+        Returns:
+            str or None: Timestamp ISO ou None
+        """
+        latest = self._get_latest_telemetry(rover_id)
+        if latest and "timestamp" in latest:
+            return latest["timestamp"]
+        
+        # Tentar obter do ficheiro
+        telemetry_folder = self.nms_server.telemetryStream.storefolder
+        rover_folder = os.path.join(telemetry_folder, rover_id)
+        
+        if os.path.exists(rover_folder):
+            try:
+                files = [f for f in os.listdir(rover_folder) if f.endswith('.json')]
+                if files:
+                    files.sort(key=lambda x: os.path.getmtime(os.path.join(rover_folder, x)), reverse=True)
+                    latest_file = os.path.join(rover_folder, files[0])
+                    timestamp = os.path.getmtime(latest_file)
+                    return datetime.fromtimestamp(timestamp).isoformat()
+            except:
+                pass
+        
+        return None
+    
+    def start(self):
+        """
+        Inicia o servidor da API em thread separada.
+        """
+        if self._running:
+            print("API de Observação já está em execução")
+            return
+        
+        self._running = True
+        
+        def run_api():
+            """Função para executar o servidor Flask em thread separada."""
+            try:
+                print(f"[API] A iniciar API de Observação em http://{self.host}:{self.port}")
+                # Desabilitar logs do Flask em produção (opcional)
+                import logging
+                log = logging.getLogger('werkzeug')
+                log.setLevel(logging.ERROR)
+                self.app.run(host=self.host, port=self.port, debug=False, use_reloader=False, threaded=True)
+            except Exception as e:
+                print(f"[ERRO] Falha ao iniciar API de Observação: {e}")
+                import traceback
+                traceback.print_exc()
+                self._running = False
+        
+        self._api_thread = threading.Thread(target=run_api, daemon=True)
+        self._api_thread.start()
+        
+        # Aguardar um pouco para garantir que o servidor iniciou
+        import time
+        time.sleep(1)
+        
+        # Verificar se a thread está a correr
+        if self._api_thread.is_alive():
+            print(f"[OK] API de Observação iniciada em http://{self.host}:{self.port}")
+            print(f"[INFO] Documentação disponível em http://{self.host}:{self.port}/")
+        else:
+            print("[AVISO] Thread da API pode não ter iniciado corretamente")
+    
+    def stop(self):
+        """
+        Para o servidor da API.
+        """
+        self._running = False
+        # Flask não tem método stop() direto, mas como é daemon thread, termina com o programa principal
+        print("API de Observação parada")
+

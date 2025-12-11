@@ -1,0 +1,8 @@
+{
+    "cpu_usage":20,
+    "ram_usage":50,
+    "bandwidth":18,
+    "jitter":2000,
+    "packet_loss":20,
+    "latency":14
+}
