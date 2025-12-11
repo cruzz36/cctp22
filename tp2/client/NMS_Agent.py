@@ -215,7 +215,6 @@ class NMS_Agent:
         self.telemetry_running = False  # Flag para controlar loop
         self.telemetry_interval = 30  # Intervalo padrão em segundos (conforme requisitos: telemetria contínua)
         self.current_mission = None  # Missão atualmente em execução
-        self.mission_telemetry_interval = None  # Intervalo de telemetria da missão atual
         self.mission_queue = []  # Fila de missões pendentes (rover executa uma de cada vez)
         self.mission_executing = False  # Flag para indicar se há missão em execução
 
@@ -396,7 +395,6 @@ class NMS_Agent:
             else:
                 self.mission_executing = True
                 self.current_mission = mission_data
-                self.mission_telemetry_interval = mission_data.get("update_frequency_seconds", 30)
                 print(f"[INFO] Missão ID: {mission_id} recebida - iniciando execução")
                 mission_thread = threading.Thread(target=self.executeMission, args=(mission_data, self.serverAddress), daemon=True)
                 mission_thread.start()
@@ -466,9 +464,9 @@ class NMS_Agent:
         total_duration_seconds = duration_minutes * 60
         num_updates = max(1, int(total_duration_seconds / update_frequency_seconds))
         
-        # Executar missão com atualizações periódicas
+        # Executar missão com atualizações periódicas de posição e estado
+        # A telemetria contínua (30s) continua a correr em paralelo
         start_time = time.time()
-        update_count = 0
         
         # Padrão de movimento dentro da área (exploração em grid)
         grid_steps_x = 5
@@ -502,21 +500,17 @@ class NMS_Agent:
             temperature = 20.0 + (elapsed_time / total_duration_seconds) * 15.0
             self.updateTemperature(temperature)
             
-            # Enviar telemetria com frequência da missão
-            self.createAndSendTelemetry(server_ip)
+            # NÃO enviar telemetria aqui - a telemetria contínua (30s) já faz isso
             
             # Aguardar até próxima atualização
             if update_idx < num_updates - 1:
                 time.sleep(update_frequency_seconds)
-            
-            update_count += 1
         
         # Missão concluída
         self.updateOperationalStatus("parado")
         self.updateVelocity(0.0)
         
-        # Enviar telemetria final (a telemetria contínua já mostra o estado "parado")
-        self.createAndSendTelemetry(server_ip)
+        # A telemetria contínua (30s) irá mostrar o estado "parado" automaticamente
         
         print(f"[OK] Missão {mission_id} concluída")
         
@@ -527,7 +521,6 @@ class NMS_Agent:
         # Limpar missão atual e verificar se há missões na fila
         if self.current_mission and self.current_mission.get("mission_id") == mission_id:
             self.current_mission = None
-            self.mission_telemetry_interval = None
             self.mission_executing = False
             
             # Se há missões na fila, executar a próxima
@@ -535,7 +528,6 @@ class NMS_Agent:
                 next_mission = self.mission_queue.pop(0)
                 self.mission_executing = True
                 self.current_mission = next_mission
-                self.mission_telemetry_interval = next_mission.get("update_frequency_seconds", 30)
                 print(f"[INFO] Iniciando próxima missão da fila: {next_mission.get('mission_id')}")
                 next_thread = threading.Thread(target=self.executeMission, args=(next_mission, server_ip), daemon=True)
                 next_thread.start()
