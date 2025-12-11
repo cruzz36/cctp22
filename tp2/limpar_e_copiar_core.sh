@@ -19,12 +19,20 @@ fi
 echo "Sessão CORE encontrada: $SESSION"
 echo ""
 
-# 2. Ir para diretório do projeto
-cd /home/core/Downloads/cctp2-main/tp2 || {
-    echo "ERRO: Diretório do projeto não encontrado!"
-    echo "Certifica-te de que estás no host CORE e o projeto está em /home/core/Downloads/cctp2-main/tp2"
-    exit 1
-}
+# 2. Ir para diretório do projeto (usar diretório atual se já estiveres no projeto)
+PROJECT_DIR=$(pwd)
+if [ ! -f "$PROJECT_DIR/copy_to_core.py" ] && [ ! -f "$PROJECT_DIR/limpar_e_copiar_core.sh" ]; then
+    # Tentar caminho padrão se não estiveres no diretório correto
+    if [ -d "/home/core/Downloads/cctp2-main/tp2" ]; then
+        cd /home/core/Downloads/cctp2-main/tp2
+        PROJECT_DIR=$(pwd)
+    else
+        echo "ERRO: Diretório do projeto não encontrado!"
+        echo "Certifica-te de que estás no diretório do projeto (deve conter copy_to_core.py)"
+        echo "Ou que o projeto está em /home/core/Downloads/cctp2-main/tp2"
+        exit 1
+    fi
+fi
 
 echo "Diretório do projeto: $(pwd)"
 echo ""

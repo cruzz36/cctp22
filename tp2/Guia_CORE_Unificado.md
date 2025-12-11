@@ -391,3 +391,6 @@ Ground Control (n2)
 cd /tmp/nms
 python3 start_ground_control.py
 (só dashboard: python3 GroundControl.py --dashboard --api http://10.0.1.10:8082)
+
+chmod +x limpar_e_copiar_core.sh
+./limpar_e_copiar_core.sh
