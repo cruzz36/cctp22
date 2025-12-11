@@ -213,7 +213,7 @@ class NMS_Agent:
         # Estado de monitorização contínua
         self.telemetry_thread = None  # Thread para monitorização contínua
         self.telemetry_running = False  # Flag para controlar loop
-        self.telemetry_interval = 30  # Intervalo padrão em segundos
+        self.telemetry_interval = 30  # Intervalo padrão em segundos (conforme requisitos: telemetria contínua)
         self.current_mission = None  # Missão atualmente em execução (para ajustar frequência de telemetria)
         self.mission_telemetry_interval = None  # Intervalo de telemetria da missão atual
 
@@ -458,10 +458,11 @@ class NMS_Agent:
             self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, mission_id)
             print(f"[DEBUG] recvMissionLink: ACK enviado")
             
-            # Armazenar missão atual e ajustar frequência de telemetria
+            # Armazenar missão atual (para tracking, mas telemetria contínua continua sempre)
             self.current_mission = mission_data
             self.mission_telemetry_interval = mission_data.get("update_frequency_seconds", 30)
-            print(f"[DEBUG] recvMissionLink: Missão {mission_id} definida como atual (frequência telemetria: {self.mission_telemetry_interval}s)")
+            print(f"[DEBUG] recvMissionLink: Missão {mission_id} definida como atual (telemetria adicional da missão: {self.mission_telemetry_interval}s)")
+            print(f"[DEBUG] recvMissionLink: Telemetria contínua continua a funcionar (30s) independentemente da missão")
             
             # Iniciar execução da missão em thread separada
             print(f"[DEBUG] recvMissionLink: Iniciando execução da missão {mission_id} em thread separada...")
@@ -956,35 +957,38 @@ class NMS_Agent:
         self.telemetry_running = True
         
         def telemetry_loop():
-            """Loop interno para envio periódico de telemetria."""
+            """Loop interno para envio periódico de telemetria contínua.
+            
+            Conforme requisitos do PDF: "Os rovers devem reportar dados de monitorização 
+            continuamente para garantir que estão a operar corretamente."
+            
+            A telemetria contínua NUNCA deve ser pausada, mesmo durante execução de missões.
+            Durante missões, a missão pode enviar telemetria adicional com frequência específica,
+            mas a telemetria contínua continua sempre a funcionar.
+            """
             iteration = 0
             print(f"[DEBUG] telemetry_loop: Thread iniciada, aguardando {self.telemetry_interval}s antes do primeiro envio...")
             time.sleep(self.telemetry_interval)  # Aguardar intervalo antes do primeiro envio
             while self.telemetry_running:
                 try:
-                    # Se há uma missão em execução, usar a frequência da missão em vez do intervalo padrão
-                    # Mas só enviar se não estivermos já a enviar telemetria da missão
-                    # (a missão envia a sua própria telemetria, então pausamos a contínua durante execução)
-                    if self.current_mission is not None:
-                        # Durante execução de missão, pausar telemetria contínua
-                        # A missão envia telemetria com a sua própria frequência
-                        current_interval = self.mission_telemetry_interval if self.mission_telemetry_interval else self.telemetry_interval
-                        print(f"[DEBUG] telemetry_loop: Missão em execução ({self.current_mission.get('mission_id')}), pausando telemetria contínua (missão usa {current_interval}s)")
-                        time.sleep(current_interval)
-                        continue
-                    
                     iteration += 1
                     filename = f"telemetry_{self.id}_{int(time.time())}.json"
-                    print(f"[DEBUG] telemetry_loop: Iteração {iteration}, criando e enviando telemetria...")
+                    
+                    # Log informativo se há missão em execução
+                    if self.current_mission is not None:
+                        print(f"[DEBUG] telemetry_loop: Iteração {iteration} (missão {self.current_mission.get('mission_id')} em execução), criando e enviando telemetria contínua...")
+                    else:
+                        print(f"[DEBUG] telemetry_loop: Iteração {iteration}, criando e enviando telemetria contínua...")
+                    
                     success = self.createAndSendTelemetry(server_ip, None, filename)
                     
                     if success:
-                        print(f"[OK] [Telemetria {iteration}] Enviada com sucesso para {server_ip}")
+                        print(f"[OK] [Telemetria Contínua {iteration}] Enviada com sucesso para {server_ip}")
                     else:
-                        print(f"[ERRO] [Telemetria {iteration}] Falha ao enviar para {server_ip} (verificar conectividade)")
+                        print(f"[ERRO] [Telemetria Contínua {iteration}] Falha ao enviar para {server_ip} (verificar conectividade)")
                     
-                    # Aguardar intervalo antes do próximo envio
-                    print(f"[DEBUG] telemetry_loop: Aguardando {self.telemetry_interval}s até próximo envio...")
+                    # Aguardar intervalo antes do próximo envio (sempre 30s para telemetria contínua)
+                    print(f"[DEBUG] telemetry_loop: Aguardando {self.telemetry_interval}s até próximo envio de telemetria contínua...")
                     time.sleep(self.telemetry_interval)
                     
                 except Exception as e:
