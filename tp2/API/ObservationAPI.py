@@ -545,23 +545,23 @@ class ObservationAPI:
             rover_folder = os.path.join(telemetry_folder, rover_filter)
             if os.path.exists(rover_folder):
                 files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
-                # Ordenar ficheiros por data de modificação (mais recente primeiro) antes de ler
-                files.sort(key=os.path.getmtime, reverse=True)
-                # Ler todos os ficheiros primeiro
+                # Ler TODOS os ficheiros primeiro (sem ordenação prévia)
                 for file_path in files:
                     try:
+                        file_mtime = os.path.getmtime(file_path)
                         with open(file_path, 'r') as f:
                             data = json.load(f)
                             # Garantir que há timestamp (usar do JSON ou do ficheiro)
                             if "timestamp" not in data:
                                 # Se não há timestamp no JSON, usar data de modificação do ficheiro
-                                file_mtime = os.path.getmtime(file_path)
                                 data["timestamp"] = datetime.fromtimestamp(file_mtime).isoformat()
                             # Garantir que rover_id está presente
                             if "rover_id" not in data and rover_filter:
                                 data["rover_id"] = rover_filter
+                            # Adicionar também o mtime como fallback para ordenação
+                            data["_file_mtime"] = file_mtime
                             telemetry_data.append(data)
-                    except:
+                    except Exception:
                         continue
         else:
             # Procurar em todas as pastas de rovers
@@ -570,35 +570,37 @@ class ObservationAPI:
                     rover_folder = os.path.join(telemetry_folder, rover_id)
                     if os.path.isdir(rover_folder):
                         files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
-                        # Ordenar ficheiros por data de modificação (mais recente primeiro) antes de ler
-                        files.sort(key=os.path.getmtime, reverse=True)
-                        # Ler todos os ficheiros primeiro
+                        # Ler TODOS os ficheiros primeiro (sem ordenação prévia)
                         for file_path in files:
                             try:
+                                file_mtime = os.path.getmtime(file_path)
                                 with open(file_path, 'r') as f:
                                     data = json.load(f)
                                     # Garantir que há timestamp (usar do JSON ou do ficheiro)
                                     if "timestamp" not in data:
                                         # Se não há timestamp no JSON, usar data de modificação do ficheiro
-                                        file_mtime = os.path.getmtime(file_path)
                                         data["timestamp"] = datetime.fromtimestamp(file_mtime).isoformat()
                                     # Garantir que rover_id está presente
                                     if "rover_id" not in data:
                                         data["rover_id"] = rover_id
+                                    # Adicionar também o mtime como fallback para ordenação
+                                    data["_file_mtime"] = file_mtime
                                     telemetry_data.append(data)
-                            except:
+                            except Exception:
                                 continue
         
         # Ordenar por timestamp (mais recente primeiro) e limitar
         # Usar timestamp do JSON se disponível, senão usar data de modificação do ficheiro
         def get_sort_key(entry):
             timestamp = entry.get("timestamp", "")
+            file_mtime = entry.get("_file_mtime", 0)
+            
             if timestamp:
                 try:
                     # Tentar converter para datetime para ordenação correta
                     if isinstance(timestamp, str):
                         # Remover timezone se presente
-                        timestamp_clean = timestamp.replace('Z', '').replace('+00:00', '')
+                        timestamp_clean = timestamp.replace('Z', '').replace('+00:00', '').split('+')[0]
                         # Tentar parse ISO format
                         try:
                             # ISO format pode ter microsegundos: YYYY-MM-DDTHH:MM:SS.ffffff
@@ -607,25 +609,35 @@ class ObservationAPI:
                                 parts = timestamp_clean.split('.')
                                 base = datetime.fromisoformat(parts[0])
                                 microseconds = int(parts[1][:6].ljust(6, '0')) if len(parts) > 1 else 0
-                                return base.replace(microsecond=microseconds)
+                                dt = base.replace(microsecond=microseconds)
                             else:
-                                return datetime.fromisoformat(timestamp_clean)
+                                dt = datetime.fromisoformat(timestamp_clean)
+                            # Retornar como timestamp Unix para comparação consistente
+                            return dt.timestamp()
                         except:
                             # Se falhar, tentar formatos alternativos
                             try:
-                                return datetime.strptime(timestamp_clean, "%Y-%m-%dT%H:%M:%S")
+                                dt = datetime.strptime(timestamp_clean, "%Y-%m-%dT%H:%M:%S")
+                                return dt.timestamp()
                             except:
-                                # Se tudo falhar, usar string para ordenação (ordenação lexicográfica funciona para ISO)
-                                return timestamp
-                    return timestamp
-                except:
-                    # Se falhar, usar string para ordenação
-                    return timestamp
-            # Se não há timestamp, usar datetime mínimo (fica no final)
-            return datetime.min
+                                # Se tudo falhar, usar file_mtime como fallback
+                                return file_mtime if file_mtime > 0 else 0
+                    elif isinstance(timestamp, (int, float)):
+                        # Se for número (Unix timestamp), usar diretamente
+                        return float(timestamp)
+                except Exception:
+                    # Se falhar, usar file_mtime como fallback
+                    return file_mtime if file_mtime > 0 else 0
+            
+            # Se não há timestamp, usar file_mtime ou datetime mínimo
+            return file_mtime if file_mtime > 0 else datetime.min.timestamp()
         
         # Ordenar por timestamp (mais recente primeiro)
         telemetry_data.sort(key=get_sort_key, reverse=True)
+        
+        # Remover campo auxiliar antes de retornar
+        for entry in telemetry_data:
+            entry.pop("_file_mtime", None)
         
         # Retornar apenas os N mais recentes
         return telemetry_data[:limit]
