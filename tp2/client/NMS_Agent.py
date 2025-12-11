@@ -524,6 +524,11 @@ class NMS_Agent:
                 print(f"[INFO] Iniciando próxima missão da fila: {next_mission.get('mission_id')}")
                 next_thread = threading.Thread(target=self.executeMission, args=(next_mission, server_ip), daemon=True)
                 next_thread.start()
+            else:
+                # Não há mais missões - parar telemetria contínua
+                if self.telemetry_running:
+                    print(f"[INFO] Sem mais missões - parando telemetria contínua")
+                    self.stopContinuousTelemetry()
 
     def sendTelemetry(self,ip,message):
         """
