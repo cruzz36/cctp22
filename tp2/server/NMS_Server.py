@@ -454,9 +454,22 @@ class NMS_Server:
         Args:
             rover_id (str): ID do rover para o qual carregar missões
         """
-        serverdb_dir = "serverDB"
-        if not os.path.exists(serverdb_dir):
-            print(f"[AVISO] _loadMissionsForRover: Diretório {serverdb_dir} não encontrado")
+        # Tentar múltiplos caminhos possíveis para serverDB
+        possible_paths = [
+            "serverDB",  # Diretório atual
+            "/tmp/nms/serverDB",  # Caminho padrão no CORE
+            os.path.join(os.path.dirname(__file__), "..", "serverDB"),  # Relativo ao módulo
+        ]
+        
+        serverdb_dir = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                serverdb_dir = path
+                break
+        
+        if not serverdb_dir:
+            print(f"[AVISO] _loadMissionsForRover: Diretório serverDB não encontrado em nenhum dos caminhos: {possible_paths}")
+            print(f"[DEBUG] _loadMissionsForRover: Diretório atual: {os.getcwd()}")
             return
         
         # Procurar ficheiros mission*.json

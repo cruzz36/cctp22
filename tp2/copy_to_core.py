@@ -37,6 +37,7 @@ ITEMS_TO_COPY = [
     "client",
     "otherEntities",
     "scripts",
+    "serverDB",
     "start_nms.py",
     "start_rover.py",
     "start_ground_control.py",
