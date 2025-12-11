@@ -526,7 +526,7 @@ class ObservationAPI:
             print(f"Erro ao ler telemetria de {rover_id}: {e}")
             return None
     
-    def _get_telemetry_data(self, limit: int, rover_filter: Optional[str] = None, max_age_minutes: int = 15) -> List[dict]:
+    def _get_telemetry_data(self, limit: int, rover_filter: Optional[str] = None, max_age_minutes: int = 5) -> List[dict]:
         """
         Obtém dados de telemetria (últimos N registos).
         
