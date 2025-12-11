@@ -540,6 +540,8 @@ class ObservationAPI:
             rover_folder = os.path.join(telemetry_folder, rover_filter)
             if os.path.exists(rover_folder):
                 files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
+                # Ordenar ficheiros por data de modificação (mais recente primeiro) antes de ler
+                files.sort(key=os.path.getmtime, reverse=True)
                 # Ler todos os ficheiros primeiro
                 for file_path in files:
                     try:
@@ -563,6 +565,8 @@ class ObservationAPI:
                     rover_folder = os.path.join(telemetry_folder, rover_id)
                     if os.path.isdir(rover_folder):
                         files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
+                        # Ordenar ficheiros por data de modificação (mais recente primeiro) antes de ler
+                        files.sort(key=os.path.getmtime, reverse=True)
                         # Ler todos os ficheiros primeiro
                         for file_path in files:
                             try:
@@ -588,13 +592,29 @@ class ObservationAPI:
                 try:
                     # Tentar converter para datetime para ordenação correta
                     if isinstance(timestamp, str):
-                        return datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                        # Remover timezone se presente para simplificar
+                        timestamp_clean = timestamp.replace('Z', '').replace('+00:00', '')
+                        # Tentar parse ISO format
+                        try:
+                            return datetime.fromisoformat(timestamp_clean)
+                        except:
+                            # Se falhar, tentar formatos alternativos
+                            try:
+                                return datetime.strptime(timestamp_clean, "%Y-%m-%dT%H:%M:%S")
+                            except:
+                                # Se tudo falhar, usar string para ordenação
+                                return timestamp
                     return timestamp
                 except:
+                    # Se falhar, usar string para ordenação (ordenação lexicográfica)
                     return timestamp
+            # Se não há timestamp, usar string vazia (fica no final)
             return ""
         
+        # Ordenar por timestamp (mais recente primeiro)
         telemetry_data.sort(key=get_sort_key, reverse=True)
+        
+        # Retornar apenas os N mais recentes
         return telemetry_data[:limit]
     
     def _get_last_telemetry_time(self, rover_id: str) -> Optional[str]:

@@ -526,30 +526,8 @@ class NMS_Agent:
             self.updateTemperature(temperature)
             
             # Enviar telemetria com frequência da missão
+            # A telemetria contínua já envia posição e estado operacional, não é necessário reportar progresso separadamente
             self.createAndSendTelemetry(server_ip)
-            
-            # Reportar progresso à Nave-Mãe
-            progress_data = {
-                "mission_id": mission_id,
-                "progress_percent": progress_percent,
-                "status": "in_progress" if progress_percent < 100 else "completed",
-                "current_position": {"x": mission_x, "y": mission_y},
-                "time_elapsed_minutes": elapsed_time / 60.0,
-                "estimated_completion_minutes": (total_duration_seconds - elapsed_time) / 60.0
-            }
-            
-            # Adicionar dados específicos da tarefa
-            if task == "capture_images":
-                progress_data["images_captured"] = update_idx * 3
-            elif task == "sample_collection":
-                progress_data["samples_collected"] = update_idx * 2
-            elif task == "environmental_analysis":
-                progress_data["analysis_points"] = update_idx * 5
-            
-            try:
-                self.reportMissionProgress(server_ip, mission_id, progress_data)
-            except Exception as e:
-                print(f"[AVISO] executeMission: Erro ao reportar progresso: {e}")
             
             # Aguardar até próxima atualização
             if update_idx < num_updates - 1:
@@ -561,27 +539,10 @@ class NMS_Agent:
         self.updateOperationalStatus("parado")
         self.updateVelocity(0.0)
         
-        # Reportar conclusão
-        final_progress = {
-            "mission_id": mission_id,
-            "progress_percent": 100,
-            "status": "completed",
-            "current_position": {"x": mission_x, "y": mission_y},
-            "time_elapsed_minutes": duration_minutes
-        }
+        # Enviar telemetria final (a telemetria contínua já mostra o estado "parado")
+        self.createAndSendTelemetry(server_ip)
         
-        if task == "capture_images":
-            final_progress["images_captured"] = update_count * 3
-        elif task == "sample_collection":
-            final_progress["samples_collected"] = update_count * 2
-        elif task == "environmental_analysis":
-            final_progress["analysis_points"] = update_count * 5
-        
-        try:
-            self.reportMissionProgress(server_ip, mission_id, final_progress)
-            print(f"[OK] Missão {mission_id} concluída")
-        except Exception as e:
-            pass  # Erro silencioso
+        print(f"[OK] Missão {mission_id} concluída")
         
         # Remover missão da lista de tarefas ativas
         if mission_id in self.tasks:
