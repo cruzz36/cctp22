@@ -526,13 +526,14 @@ class ObservationAPI:
             print(f"Erro ao ler telemetria de {rover_id}: {e}")
             return None
     
-    def _get_telemetry_data(self, limit: int, rover_filter: Optional[str] = None) -> List[dict]:
+    def _get_telemetry_data(self, limit: int, rover_filter: Optional[str] = None, max_age_minutes: int = 15) -> List[dict]:
         """
         Obtém dados de telemetria (últimos N registos).
         
         Args:
             limit (int): Número máximo de registos
             rover_filter (str, optional): Filtrar por rover específico
+            max_age_hours (int): Idade máxima em horas para considerar telemetria (default: 2 horas)
             
         Returns:
             list: Lista de dados de telemetria
@@ -542,6 +543,8 @@ class ObservationAPI:
         
         telemetry_folder = self.nms_server.telemetryStream.storefolder
         telemetry_data = []
+        current_time = datetime.now().timestamp()
+        max_age_seconds = max_age_minutes * 60  # Converter minutos para segundos
         
         # Se filtro por rover, procurar apenas na pasta desse rover
         if rover_filter:
@@ -558,6 +561,39 @@ class ObservationAPI:
                             if "timestamp" not in data:
                                 # Se não há timestamp no JSON, usar data de modificação do ficheiro
                                 data["timestamp"] = datetime.fromtimestamp(file_mtime).isoformat()
+                            
+                            # Verificar idade do registo (filtrar por tempo)
+                            timestamp_str = data.get("timestamp", "")
+                            if timestamp_str:
+                                try:
+                                    if isinstance(timestamp_str, str):
+                                        timestamp_clean = timestamp_str.replace('Z', '').replace('+00:00', '').split('+')[0]
+                                        if '.' in timestamp_clean:
+                                            parts = timestamp_clean.split('.')
+                                            base = datetime.fromisoformat(parts[0])
+                                            microseconds = int(parts[1][:6].ljust(6, '0')) if len(parts) > 1 else 0
+                                            timestamp_dt = base.replace(microsecond=microseconds)
+                                        else:
+                                            timestamp_dt = datetime.fromisoformat(timestamp_clean)
+                                        timestamp_ts = timestamp_dt.timestamp()
+                                    else:
+                                        timestamp_ts = float(timestamp_str)
+                                    
+                                    # Filtrar por idade (apenas registos das últimas X horas)
+                                    age_seconds = current_time - timestamp_ts
+                                    if age_seconds > max_age_seconds:
+                                        continue  # Ignorar registos muito antigos
+                                except Exception:
+                                    # Se não conseguir parsear timestamp, usar file_mtime
+                                    age_seconds = current_time - file_mtime
+                                    if age_seconds > max_age_seconds:
+                                        continue
+                            else:
+                                # Se não há timestamp, usar file_mtime
+                                age_seconds = current_time - file_mtime
+                                if age_seconds > max_age_seconds:
+                                    continue
+                            
                             # Garantir que rover_id está presente
                             if "rover_id" not in data and rover_filter:
                                 data["rover_id"] = rover_filter
@@ -583,6 +619,39 @@ class ObservationAPI:
                                     if "timestamp" not in data:
                                         # Se não há timestamp no JSON, usar data de modificação do ficheiro
                                         data["timestamp"] = datetime.fromtimestamp(file_mtime).isoformat()
+                                    
+                                    # Verificar idade do registo (filtrar por tempo)
+                                    timestamp_str = data.get("timestamp", "")
+                                    if timestamp_str:
+                                        try:
+                                            if isinstance(timestamp_str, str):
+                                                timestamp_clean = timestamp_str.replace('Z', '').replace('+00:00', '').split('+')[0]
+                                                if '.' in timestamp_clean:
+                                                    parts = timestamp_clean.split('.')
+                                                    base = datetime.fromisoformat(parts[0])
+                                                    microseconds = int(parts[1][:6].ljust(6, '0')) if len(parts) > 1 else 0
+                                                    timestamp_dt = base.replace(microsecond=microseconds)
+                                                else:
+                                                    timestamp_dt = datetime.fromisoformat(timestamp_clean)
+                                                timestamp_ts = timestamp_dt.timestamp()
+                                            else:
+                                                timestamp_ts = float(timestamp_str)
+                                            
+                                            # Filtrar por idade (apenas registos das últimas X horas)
+                                            age_seconds = current_time - timestamp_ts
+                                            if age_seconds > max_age_seconds:
+                                                continue  # Ignorar registos muito antigos
+                                        except Exception:
+                                            # Se não conseguir parsear timestamp, usar file_mtime
+                                            age_seconds = current_time - file_mtime
+                                            if age_seconds > max_age_seconds:
+                                                continue
+                                    else:
+                                        # Se não há timestamp, usar file_mtime
+                                        age_seconds = current_time - file_mtime
+                                        if age_seconds > max_age_seconds:
+                                            continue
+                                    
                                     # Garantir que rover_id está presente
                                     if "rover_id" not in data:
                                         data["rover_id"] = rover_id

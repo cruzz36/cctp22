@@ -420,7 +420,12 @@ class GroundControl:
         
         if not telemetry:
             print("Nenhum dado de telemetria disponível.")
+            print("\n" + "="*80)
             return
+        
+        # Mostrar apenas as telemetrias que realmente existem (não sempre o limite máximo)
+        num_entries = len(telemetry)
+        print(f"Mostrando {num_entries} registo(s) de telemetria:")
         
         for i, entry in enumerate(telemetry, 1):
             print(f"\n--- Registo {i} ---")
@@ -445,8 +450,8 @@ class GroundControl:
         # Missões ativas
         self.show_missions(status_filter='active')
         
-        # Última telemetria
-        self.show_telemetry(limit=5)
+        # Última telemetria (mostrar apenas as que existem, máximo 10)
+        self.show_telemetry(limit=10)
     
     def run_interactive(self):
         """Executa interface interativa do Ground Control."""
