@@ -649,8 +649,11 @@ class NMS_Agent:
             
             # Gerar nome do ficheiro se não fornecido
             if filename is None:
-                timestamp = int(time.time())
-                filename = f"telemetry_{self.id}_{timestamp}.json"
+                # Usar timestamp com microsegundos para evitar colisões
+                import time as time_module
+                timestamp = time_module.time()  # Float com microsegundos
+                timestamp_str = f"{timestamp:.6f}".replace('.', '_')  # Remover ponto decimal
+                filename = f"telemetry_{self.id}_{timestamp_str}.json"
             
             # Garantir que filename está na pasta correta
             if not os.path.dirname(filename):
@@ -786,7 +789,10 @@ class NMS_Agent:
             time.sleep(self.telemetry_interval)  # Aguardar intervalo antes do primeiro envio
             while self.telemetry_running:
                 try:
-                    filename = f"telemetry_{self.id}_{int(time.time())}.json"
+                    # Usar timestamp com microsegundos para evitar colisões entre telemetria contínua e de missão
+                    timestamp = time.time()  # Float com microsegundos
+                    timestamp_str = f"{timestamp:.6f}".replace('.', '_')  # Remover ponto decimal
+                    filename = f"telemetry_{self.id}_{timestamp_str}.json"
                     success = self.createAndSendTelemetry(server_ip, None, filename)
                     
                     if success:
