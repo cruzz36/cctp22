@@ -708,10 +708,14 @@ class NMS_Agent:
             dict: Dicionário com mensagem de telemetria completa e validada
         """
         # Criar estrutura base com campos obrigatórios
+        import time
+        from datetime import datetime
+        
         telemetry = {
             "rover_id": self.id,
             "position": self.position.copy(),  # Cópia para não modificar original
-            "operational_status": self.operational_status
+            "operational_status": self.operational_status,
+            "timestamp": datetime.now().isoformat()  # Adicionar timestamp ISO 8601
         }
         
         # Adicionar campos opcionais

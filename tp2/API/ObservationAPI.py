@@ -195,9 +195,11 @@ class ObservationAPI:
             status_filter = request.args.get('status', None)
             missions = []
             
-            # Missões ativas (em self.tasks)
+            # Missões em self.tasks (podem estar ativas ou na fila)
             for mission_id, mission_data in self.nms_server.tasks.items():
                 mission_info = self._format_mission(mission_id, mission_data)
+                # Só mostrar como "active" se realmente estiver em execução
+                # Missões na fila aparecem como "pending"
                 if status_filter is None or mission_info["status"] == status_filter:
                     missions.append(mission_info)
             
@@ -373,14 +375,47 @@ class ObservationAPI:
                 mission_data = {}
         
         # Determinar status da missão
-        status = "active"
+        rover_id = mission_data.get("rover_id", "unknown")
+        
+        # Verificar primeiro se está concluída
+        status = "active"  # Default
         if mission_id in self.nms_server.missionProgress:
             progress = self.nms_server.missionProgress[mission_id]
             if isinstance(progress, dict):
                 for rover_progress in progress.values():
-                    if isinstance(rover_progress, dict) and rover_progress.get("status") == "completed":
-                        status = "completed"
-                        break
+                    if isinstance(rover_progress, dict):
+                        progress_status = rover_progress.get("status", "")
+                        if progress_status == "completed":
+                            status = "completed"
+                            break
+                        elif progress_status == "in_progress":
+                            # Esta missão está realmente em execução
+                            status = "active"
+                            break
+        
+        # Se não tem progresso "in_progress" e há outra missão do mesmo rover com progresso,
+        # esta missão está na fila (pending)
+        if status == "active" and mission_id not in self.nms_server.missionProgress:
+            # Verificar se há outra missão do mesmo rover com progresso "in_progress"
+            for other_id, other_data in self.nms_server.tasks.items():
+                if other_id != mission_id:
+                    if isinstance(other_data, str):
+                        try:
+                            other_data = json.loads(other_data)
+                        except:
+                            continue
+                    if other_data.get("rover_id") == rover_id:
+                        if other_id in self.nms_server.missionProgress:
+                            other_progress = self.nms_server.missionProgress[other_id]
+                            if isinstance(other_progress, dict):
+                                for rover_progress in other_progress.values():
+                                    if isinstance(rover_progress, dict):
+                                        if rover_progress.get("status") == "in_progress":
+                                            # Há outra missão em execução, esta está na fila
+                                            status = "pending"
+                                            break
+                                if status == "pending":
+                                    break
         
         mission_info = {
             "mission_id": mission_id,
@@ -402,7 +437,7 @@ class ObservationAPI:
     
     def _get_current_mission(self, rover_id: str) -> Optional[str]:
         """
-        Obtém a missão atual de um rover.
+        Obtém a missão atual de um rover (a que está realmente em execução).
         
         Args:
             rover_id (str): ID do rover
@@ -410,6 +445,8 @@ class ObservationAPI:
         Returns:
             str or None: ID da missão atual ou None se não houver
         """
+        # Primeiro, procurar missão com status "in_progress" (realmente em execução)
+        active_mission = None
         for mission_id, mission_data in self.nms_server.tasks.items():
             if isinstance(mission_data, str):
                 try:
@@ -418,8 +455,18 @@ class ObservationAPI:
                     continue
             
             if mission_data.get("rover_id") == rover_id:
-                return mission_id
+                # Verificar se há progresso com status "in_progress"
+                if mission_id in self.nms_server.missionProgress:
+                    progress = self.nms_server.missionProgress[mission_id]
+                    if isinstance(progress, dict) and rover_id in progress:
+                        rover_progress = progress[rover_id]
+                        if isinstance(rover_progress, dict):
+                            status = rover_progress.get("status", "")
+                            if status == "in_progress":
+                                return mission_id  # Esta é a missão em execução
         
+        # Se não encontrou missão "in_progress", retornar None
+        # (as outras missões do mesmo rover estão na fila e serão marcadas como "pending")
         return None
     
     def _get_mission_progress(self, rover_id: str, mission_id: Optional[str]) -> Optional[dict]:
@@ -493,11 +540,19 @@ class ObservationAPI:
             rover_folder = os.path.join(telemetry_folder, rover_filter)
             if os.path.exists(rover_folder):
                 files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
-                for file_path in sorted(files, key=os.path.getmtime, reverse=True)[:limit]:
+                # Ler todos os ficheiros primeiro
+                for file_path in files:
                     try:
                         with open(file_path, 'r') as f:
                             data = json.load(f)
-                            data["timestamp"] = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+                            # Garantir que há timestamp (usar do JSON ou do ficheiro)
+                            if "timestamp" not in data:
+                                # Se não há timestamp no JSON, usar data de modificação do ficheiro
+                                file_mtime = os.path.getmtime(file_path)
+                                data["timestamp"] = datetime.fromtimestamp(file_mtime).isoformat()
+                            # Garantir que rover_id está presente
+                            if "rover_id" not in data and rover_filter:
+                                data["rover_id"] = rover_filter
                             telemetry_data.append(data)
                     except:
                         continue
@@ -508,17 +563,38 @@ class ObservationAPI:
                     rover_folder = os.path.join(telemetry_folder, rover_id)
                     if os.path.isdir(rover_folder):
                         files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
-                        for file_path in sorted(files, key=os.path.getmtime, reverse=True)[:limit]:
+                        # Ler todos os ficheiros primeiro
+                        for file_path in files:
                             try:
                                 with open(file_path, 'r') as f:
                                     data = json.load(f)
-                                    data["timestamp"] = datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat()
+                                    # Garantir que há timestamp (usar do JSON ou do ficheiro)
+                                    if "timestamp" not in data:
+                                        # Se não há timestamp no JSON, usar data de modificação do ficheiro
+                                        file_mtime = os.path.getmtime(file_path)
+                                        data["timestamp"] = datetime.fromtimestamp(file_mtime).isoformat()
+                                    # Garantir que rover_id está presente
+                                    if "rover_id" not in data:
+                                        data["rover_id"] = rover_id
                                     telemetry_data.append(data)
                             except:
                                 continue
         
-        # Ordenar por timestamp e limitar
-        telemetry_data.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        # Ordenar por timestamp (mais recente primeiro) e limitar
+        # Usar timestamp do JSON se disponível, senão usar data de modificação do ficheiro
+        def get_sort_key(entry):
+            timestamp = entry.get("timestamp", "")
+            if timestamp:
+                try:
+                    # Tentar converter para datetime para ordenação correta
+                    if isinstance(timestamp, str):
+                        return datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                    return timestamp
+                except:
+                    return timestamp
+            return ""
+        
+        telemetry_data.sort(key=get_sort_key, reverse=True)
         return telemetry_data[:limit]
     
     def _get_last_telemetry_time(self, rover_id: str) -> Optional[str]:
