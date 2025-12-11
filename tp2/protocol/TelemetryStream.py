@@ -60,41 +60,28 @@ class TelemetryStream:
             ip (str): Endereço IP do cliente
             port (int): Porta do cliente
         """
-        print(f"[DEBUG] TelemetryStream._handle_client: Processando conexão de {ip}:{port}")
         try:
             filename = self.recv(clientSocket, ip, port)
             filename_str = filename.decode()
-            print(f"[DEBUG] TelemetryStream._handle_client: Ficheiro recebido: {filename_str}")
             
             # Tentar organizar por rover_id se o ficheiro contém telemetria JSON
             try:
-                # Ler ficheiro recebido para extrair rover_id
                 file_path = os.path.join(self.storefolder, filename_str)
                 if os.path.exists(file_path):
                     with open(file_path, "r") as f:
                         telemetry_data = json.load(f)
                         rover_id = telemetry_data.get("rover_id", "unknown")
-                        
-                        # Criar pasta por rover se não existir
                         rover_folder = os.path.join(self.storefolder, rover_id)
                         os.makedirs(rover_folder, exist_ok=True)
-                        
-                        # Mover ficheiro para pasta do rover
                         new_path = os.path.join(rover_folder, filename_str)
                         if os.path.exists(file_path) and file_path != new_path:
                             os.rename(file_path, new_path)
-                            print(f"Telemetria de {rover_id} organizada em: {rover_folder}/")
-            except (json.JSONDecodeError, KeyError, OSError) as e:
-                # Se não conseguir organizar, manter na pasta principal
+            except (json.JSONDecodeError, KeyError, OSError):
                 pass
             
-            print(f"[OK] Telemetria recebida de {ip}: {filename_str}")
-        except Exception as e:
-            print(f"[ERRO] TelemetryStream._handle_client: Erro ao receber telemetria de {ip}:{port}: {e}")
-            import traceback
-            traceback.print_exc()
+        except Exception:
+            pass
         finally:
-            print(f"[DEBUG] TelemetryStream._handle_client: Fechando conexão com {ip}:{port}")
             clientSocket.close()
     
     def server(self):
@@ -116,16 +103,11 @@ class TelemetryStream:
         
         NOTA: Este método bloqueia indefinidamente - deve ser executado em thread separada
         """
-        print(f"[DEBUG] TelemetryStream.server: Iniciando servidor em {self.ip}:{self.port}")
         self.socket.listen()
-        print(f"[OK] Servidor TelemetryStream a escutar em {self.ip}:{self.port}")
-        print("[DEBUG] TelemetryStream.server: Aceitando conexões de múltiplos rovers em paralelo...")
         
         while True:
             try:
-                print("[DEBUG] TelemetryStream.server: Aguardando nova conexão...")
                 clientSocket, (ip, _) = self.socket.accept()
-                print(f"[DEBUG] TelemetryStream.server: Nova conexão TCP recebida de {ip}")
                 # Criar thread para processar conexão em paralelo
                 client_thread = threading.Thread(
                     target=self._handle_client,
@@ -133,9 +115,8 @@ class TelemetryStream:
                     daemon=True
                 )
                 client_thread.start()
-                print(f"[OK] Nova conexão de {ip} - processando em thread separada")
-            except Exception as e:
-                print(f"[ERRO] TelemetryStream.server: Erro ao aceitar conexão: {e}")
+            except Exception:
+                continue
                 import traceback
                 traceback.print_exc()
                 # Continuar loop mesmo em caso de erro
@@ -255,21 +236,16 @@ class TelemetryStream:
         # Criar novo socket para cada envio (evita conflito com socket do servidor)
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        print(f"[DEBUG] TelemetryStream.send: Preparando envio de telemetria para {ip}:{self.port}")
-        
         try:
             # Verificar se ficheiro existe antes de tentar enviar
             if not os.path.exists(message):
-                print(f"[ERRO] TelemetryStream.send: Ficheiro {message} não encontrado")
                 return False
             
             # Extrair apenas o nome do ficheiro (sem caminho completo)
             filename = os.path.basename(message)
-            print(f"[DEBUG] TelemetryStream.send: Ficheiro encontrado: {filename}, conectando a {ip}:{self.port}...")
             
             # Conectar ao servidor
             client_socket.connect((ip, self.port))
-            print(f"[DEBUG] TelemetryStream.send: Conectado a {ip}:{self.port}, enviando ficheiro...")
             
             # Enviar tamanho do nome do ficheiro (4 bytes)
             length = self.formatInteger(len(filename))
@@ -287,30 +263,13 @@ class TelemetryStream:
             
             # Fechar conexão
             client_socket.close()
-            print(f"[OK] TelemetryStream.send: Ficheiro {filename} enviado com sucesso para {ip}:{self.port}")
             return True
             
-        except ConnectionRefusedError:
-            print(f"[ERRO] TelemetryStream.send: Servidor {ip}:{self.port} recusou conexão (servidor pode não estar a correr)")
-            client_socket.close()
-            return False
-        except TimeoutError:
-            print(f"[ERRO] TelemetryStream.send: Timeout ao conectar a {ip}:{self.port} (verificar rotas de rede)")
-            client_socket.close()
-            return False
-        except FileNotFoundError:
-            print(f"[ERRO] TelemetryStream.send: Ficheiro {message} não encontrado")
-            client_socket.close()
-            return False
-        except OSError as e:
-            print(f"[ERRO] TelemetryStream.send: Erro de conexão ao enviar para {ip}:{self.port}: {e}")
-            client_socket.close()
-            return False
-        except Exception as e:
-            print(f"[ERRO] TelemetryStream.send: Erro inesperado ao enviar telemetria para {ip}:{self.port}: {e}")
-            import traceback
-            traceback.print_exc()
-            client_socket.close()
+        except Exception:
+            try:
+                client_socket.close()
+            except:
+                pass
             return False
 
     def endConnection(self):

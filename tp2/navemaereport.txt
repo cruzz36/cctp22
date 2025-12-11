@@ -1,0 +1,177 @@
+root@NaveMae:/tmp/pycore.38885/NaveMae.conf# cd /tmp/nms                    
+root@NaveMae:/tmp/nms# python3 start_nms.py               
+============================================================
+NAVE-MÃE - Iniciando...
+============================================================
+[INFO] A limpar processos antigos e portas 8080/8081/8082...
+[DEBUG] start_nms: Criando instância NMS_Server...
+[INFO] API de Observação inicializada (host=0.0.0.0, port=8082)
+[DEBUG] start_nms: NMS_Server criado, IP: 10.0.1.10
+[DEBUG] start_nms: Iniciando thread MissionLink (UDP:8080)...
+[DEBUG] recvMissionLink: Thread iniciada, aguardando mensagens de rovers...
+[OK] MissionLink (UDP:8080) iniciado
+[DEBUG] recvMissionLink: Aguardando próxima mensagem...
+[DEBUG] recv: Aguardando conexão de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] start_nms: Iniciando thread TelemetryStream (TCP:8081)...
+[DEBUG] recvTelemetry: Iniciando servidor TelemetryStream...
+[OK] TelemetryStream (TCP:8081) iniciado
+[DEBUG] TelemetryStream.server: Iniciando servidor em 10.0.1.10:8081
+[OK] Servidor TelemetryStream a escutar em 10.0.1.10:8081
+[DEBUG] TelemetryStream.server: Aceitando conexões de múltiplos rovers em paralelo...
+[DEBUG] TelemetryStream.server: Aguardando nova conexão...
+[DEBUG] start_nms: Verificando disponibilidade da API de Observação...
+[DEBUG] start_nms: Iniciando API de Observação (HTTP:8082)...
+[API] A iniciar API de Observação em http://0.0.0.0:8082
+ * Serving Flask app "API.ObservationAPI" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+[DEBUG] acceptConnection: Recebido pacote de 10.0.2.10:8080
+[DEBUG] acceptConnection: SYN recebido de 10.0.2.10:8080 (idAgent=r2)
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.2.10:8080
+[OK] CONNECTION ESTABLISHED com 10.0.2.10:8080 (idAgent=r2)
+---------------
+[DEBUG] recv: Conexão aceite de 10.0.2.10:8080 (idAgent=r2, seq=100, ack=100)
+[DEBUG] recvMissionLink: Mensagem recebida: idAgent=r2, idMission=000, missionType=R, ip=10.0.2.10
+[DEBUG] recvMissionLink: Processando registo de rover (idAgent=r2, ip=10.0.2.10)
+[OK] Rover r2 registado (IP: 10.0.2.10)
+[DEBUG] send: Iniciando conexão para enviar mensagem (ip=10.0.2.10, port=8080, idAgent=r2, missionType=None, idMission=000)
+[DEBUG] startConnection: Iniciando handshake com 10.0.2.10:8080 (idAgent=r2, retryLimit=5)
+[DEBUG] startConnection: Enviando SYN para 10.0.2.10:8080 (tentativa 1/5)
+[DEBUG] startConnection: Recebido SYN-ACK de 10.0.2.10:8080, enviando ACK
+[OK] CONNECTION ESTABLISHED com 10.0.2.10:8080 (idAgent=r2)
+--------------
+[DEBUG] send: Conexão estabelecida, enviando dados (seq=101, ack=101)
+[DEBUG] sendMission: Preparando envio de missão para r2 (10.0.2.10)
+[DEBUG] sendMission: Missão validada com sucesso
+[DEBUG] sendMission: Enviando missão M-003 para r2 (10.0.2.10)
+[DEBUG] send: Iniciando conexão para enviar mensagem (ip=10.0.2.10, port=8080, idAgent=r2, missionType=T, idMission=M-003)
+[DEBUG] startConnection: Iniciando handshake com 10.0.2.10:8080 (idAgent=r2, retryLimit=5)
+[DEBUG] startConnection: Enviando SYN para 10.0.2.10:8080 (tentativa 1/5)
+[DEBUG] startConnection: Recebido SYN-ACK de 10.0.2.10:8080, enviando ACK
+[OK] CONNECTION ESTABLISHED com 10.0.2.10:8080 (idAgent=r2)
+--------------
+[DEBUG] send: Conexão estabelecida, enviando dados (seq=101, ack=101)
+[DEBUG] sendMission: Aguardando confirmação de r2...
+[DEBUG] recv: Aguardando conexão de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Recebido pacote de 10.0.2.10:8080
+[DEBUG] acceptConnection: SYN recebido de 10.0.2.10:8080 (idAgent=r2)
+
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.2.10:8080
+[OK] CONNECTION ESTABLISHED com 10.0.2.10:8080 (idAgent=r2)
+---------------
+[DEBUG] recv: Conexão aceite de 10.0.2.10:8080 (idAgent=r2, seq=100, ack=100)
+[DEBUG] sendMission: Resposta recebida: idAgent=r2, missionType=N, message=M-003, ip=10.0.2.10
+[OK] sendMission: Missão M-003 confirmada por r2
+[DEBUG] sendMission: Missão M-003 armazenada em self.tasks
+[OK] Missão M-003 enviada para rover r2
+[DEBUG] sendMission: Preparando envio de missão para r2 (10.0.2.10)
+[DEBUG] sendMission: Missão validada com sucesso
+[DEBUG] sendMission: Enviando missão M-002 para r2 (10.0.2.10)
+[DEBUG] send: Iniciando conexão para enviar mensagem (ip=10.0.2.10, port=8080, idAgent=r2, missionType=T, idMission=M-002)
+[DEBUG] startConnection: Iniciando handshake com 10.0.2.10:8080 (idAgent=r2, retryLimit=5)
+[DEBUG] startConnection: Enviando SYN para 10.0.2.10:8080 (tentativa 1/5)
+[DEBUG] startConnection: Recebido SYN-ACK de 10.0.2.10:8080, enviando ACK
+[OK] CONNECTION ESTABLISHED com 10.0.2.10:8080 (idAgent=r2)
+--------------
+[DEBUG] send: Conexão estabelecida, enviando dados (seq=101, ack=101)
+[DEBUG] sendMission: Aguardando confirmação de r2...
+[DEBUG] recv: Aguardando conexão de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Recebido pacote de 10.0.2.10:8080
+[DEBUG] acceptConnection: SYN recebido de 10.0.2.10:8080 (idAgent=r2)
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.2.10:8080
+[OK] CONNECTION ESTABLISHED com 10.0.2.10:8080 (idAgent=r2)
+---------------
+[DEBUG] recv: Conexão aceite de 10.0.2.10:8080 (idAgent=r2, seq=100, ack=100)
+[DEBUG] sendMission: Resposta recebida: idAgent=r2, missionType=N, message=M-002, ip=10.0.2.10
+[OK] sendMission: Missão M-002 confirmada por r2
+[DEBUG] sendMission: Missão M-002 armazenada em self.tasks
+[OK] Missão M-002 enviada para rover r2
+[INFO] 2 missão(ões) atribuída(s) ao rover r2
+[DEBUG] recvMissionLink: Aguardando próxima mensagem...
+[DEBUG] recv: Aguardando conexão de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[OK] API de Observação iniciada em http://0.0.0.0:8082
+[INFO] Documentação disponível em http://0.0.0.0:8082/
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[OK] API de Observação (HTTP:8082) iniciada
+[INFO] API acessível em: http://10.0.1.10:8082
+[INFO] API acessível em: http://0.0.0.0:8082 (todas as interfaces)
+============================================================
+Nave-Mãe pronta e a escutar!
+============================================================
+
+Aguardando conexões de rovers...
+Pressione Ctrl+C para encerrar
+
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+MissionLink: sem ligação após 10s à espera de SYN
+[AVISO] MissionLink timeout à espera de rover: MissionLink: sem ligação após 10s à espera de SYN
+[DEBUG] recvMissionLink: Aguardando próxima mensagem...
+[DEBUG] recv: Aguardando conexão de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+MissionLink: sem ligação após 10s à espera de SYN
+[AVISO] MissionLink timeout à espera de rover: MissionLink: sem ligação após 10s à espera de SYN
+
+[DEBUG] recvMissionLink: Aguardando próxima mensagem...
+[DEBUG] recv: Aguardando conexão de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] TelemetryStream.server: Nova conexão TCP recebida de 10.0.2.10
+[DEBUG] TelemetryStream._handle_client: Processando conexão de 10.0.2.10:8081
+[OK] Nova conexão de 10.0.2.10 - processando em thread separada
+[DEBUG] TelemetryStream.server: Aguardando nova conexão...
+[DEBUG] TelemetryStream._handle_client: Ficheiro recebido: telemetry_r2_1765472449.json
+[DEBUG] acceptConnection: Recebido pacote de 10.0.2.10:8080
+[DEBUG] acceptConnection: SYN recebido de 10.0.2.10:8080 (idAgent=r2)
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.2.10:8080
+Telemetria de r2 organizada em: ../NaveMae/alerts/r2/
+[OK] Telemetria recebida de 10.0.2.10: telemetry_r2_1765472449.json
+[DEBUG] TelemetryStream._handle_client: Fechando conexão com 10.0.2.10:8081
+[DEBUG] acceptConnection: Timeout ao aguardar ACK de 10.0.2.10:8080, reenviando SYN-ACK
+[DEBUG] TelemetryStream.server: Nova conexão TCP recebida de 10.0.2.10
+[DEBUG] TelemetryStream._handle_client: Processando conexão de 10.0.2.10:8081
+[OK] Nova conexão de 10.0.2.10 - processando em thread separada
+[DEBUG] TelemetryStream.server: Aguardando nova conexão...
+[DEBUG] TelemetryStream._handle_client: Ficheiro recebido: telemetry_r2_1765472452.json
+Telemetria de r2 organizada em: ../NaveMae/alerts/r2/
+[OK] Telemetria recebida de 10.0.2.10: telemetry_r2_1765472452.json
+[DEBUG] TelemetryStream._handle_client: Fechando conexão com 10.0.2.10:8081
+[DEBUG] acceptConnection: Timeout ao aguardar ACK de 10.0.2.10:8080, reenviando SYN-ACK
+[DEBUG] acceptConnection: Timeout ao aguardar ACK de 10.0.2.10:8080, reenviando SYN-ACK
+[OK] CONNECTION ESTABLISHED com 10.0.2.10:8080 (idAgent=r2)
+---------------
+[DEBUG] recv: Conexão aceite de 10.0.2.10:8080 (idAgent=r2, seq=100, ack=100)
+[DEBUG] recvMissionLink: Mensagem recebida: idAgent=r2, idMission=M-003, missionType=P, ip=10.0.2.10
+[DEBUG] recvMissionLink: Processando reporte de progresso (idAgent=r2, idMission=M-003, ip=10.0.2.10)
+[DEBUG] handleMissionProgress: Processando progresso de r2 para missão M-003
+[DEBUG] handleMissionProgress: Progresso parseado: {'mission_id': 'M-003', 'progress_percent': 0, 'status': 'in_progress', 'current_position': {'x': 200.0, 'y': 100.0}, 'time_elapsed_minutes': 9.139378865559896e-08, 'estimated_completion_minutes': 44.99999990860621, 'analysis_points': 0}
+[OK] Progresso da missão M-003 (rover r2): 0% - in_progress
+[DEBUG] handleMissionProgress: Enviando confirmação para r2
+[DEBUG] send: Iniciando conexão para enviar mensagem (ip=10.0.2.10, port=8080, idAgent=r2, missionType=None, idMission=M-003)
+[DEBUG] startConnection: Iniciando handshake com 10.0.2.10:8080 (idAgent=r2, retryLimit=5)
+[DEBUG] startConnection: Enviando SYN para 10.0.2.10:8080 (tentativa 1/5)
+[DEBUG] startConnection: Recebido SYN-ACK de 10.0.2.10:8080, enviando ACK
+[OK] CONNECTION ESTABLISHED com 10.0.2.10:8080 (idAgent=r2)
+--------------
+[DEBUG] send: Conexão estabelecida, enviando dados (seq=101, ack=101)
+[DEBUG] handleMissionProgress: Confirmação enviada
+[DEBUG] recvMissionLink: Aguardando próxima mensagem...
+[DEBUG] recv: Aguardando conexão de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+[DEBUG] acceptConnection: Aguardando SYN de rover...
+^C
