@@ -74,6 +74,28 @@ def main():
         if not registration_success:
             print("[AVISO] Continuando sem registo bem-sucedido...")
         
+        # Iniciar thread para receber missões via MissionLink
+        print(f"[...] A iniciar listener de missões (MissionLink)...")
+        def mission_listener():
+            """Loop contínuo para receber e processar missões."""
+            print(f"[DEBUG] mission_listener: Thread iniciada para rover {rover_id}")
+            while True:
+                try:
+                    # recvMissionLink() já processa missões automaticamente e inicia execução
+                    mission = rover.recvMissionLink()
+                    if mission:
+                        print(f"[DEBUG] mission_listener: Missão recebida e processada: {mission.get('mission_id')}")
+                except Exception as e:
+                    print(f"[AVISO] mission_listener: Erro ao receber missão: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    time.sleep(2)  # Aguardar antes de tentar novamente
+        
+        ml_thread = threading.Thread(target=mission_listener, daemon=True)
+        ml_thread.start()
+        print(f"[OK] Listener de missões ativo")
+        time.sleep(0.5)  # Pequeno delay para garantir inicialização
+        
         # Iniciar telemetria contínua
         print(f"[...] A iniciar telemetria contínua...")
         rover.startContinuousTelemetry(nms_ip, interval_seconds=telemetry_interval)
@@ -82,7 +104,8 @@ def main():
         print("="*60)
         print(f"Rover {rover_id} pronto!")
         print("="*60)
-        print("\nRover em operação. Pressione Ctrl+C para encerrar\n")
+        print("\nRover em operação. Aguardando missões...")
+        print("Pressione Ctrl+C para encerrar\n")
         
         # Manter rover a correr
         try:

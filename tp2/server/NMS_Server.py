@@ -4,6 +4,7 @@ import threading
 from otherEntities import Limit
 import os
 import json
+import glob
 
 def validateMission(mission_data):
     """
@@ -396,6 +397,12 @@ class NMS_Server:
             ):
                 # Confirmação recebida
                 print(f"[OK] sendMission: Missão {mission_id} confirmada por {idAgent}")
+                # Armazenar missão em self.tasks para tracking
+                if isinstance(mission_data, dict):
+                    self.tasks[mission_id] = mission_data
+                else:
+                    self.tasks[mission_id] = mission_json
+                print(f"[DEBUG] sendMission: Missão {mission_id} armazenada em self.tasks")
                 return True
             
             # Retransmitir
@@ -414,6 +421,7 @@ class NMS_Server:
         """
         Regista um agente/rover no sistema.
         Envia confirmação de registo através do MissionLink.
+        Carrega automaticamente missões do serverDB para o rover registado.
         
         Args:
             idAgent (str): Identificador único do agente
@@ -428,11 +436,80 @@ class NMS_Server:
             # Bug fix: ackkey é uma flag, não um missionType. Usar None como missionType
             self.missionLink.send(ip,self.missionLink.port,None,idAgent,"000","Registered")
             print(f"[DEBUG] registerAgent: Confirmação enviada para {idAgent}")
+            
+            # Carregar missões do serverDB para este rover
+            print(f"[DEBUG] registerAgent: Carregando missões do serverDB para rover {idAgent}...")
+            self._loadMissionsForRover(idAgent)
             return
         print(f"[AVISO] Rover {idAgent} já estava registado (IP: {ip})")
         # Bug fix: ackkey é uma flag, não um missionType. Usar None como missionType
         self.missionLink.send(ip,self.missionLink.port,None,idAgent,"000","Already registered")
         print(f"[DEBUG] registerAgent: Resposta 'Already registered' enviada para {idAgent}")
+    
+    def _loadMissionsForRover(self, rover_id):
+        """
+        Carrega automaticamente missões do diretório serverDB para um rover específico.
+        Procura por ficheiros mission*.json e envia missões que correspondem ao rover_id.
+        
+        Args:
+            rover_id (str): ID do rover para o qual carregar missões
+        """
+        serverdb_dir = "serverDB"
+        if not os.path.exists(serverdb_dir):
+            print(f"[AVISO] _loadMissionsForRover: Diretório {serverdb_dir} não encontrado")
+            return
+        
+        # Procurar ficheiros mission*.json
+        import glob
+        mission_files = glob.glob(os.path.join(serverdb_dir, "mission*.json"))
+        
+        if not mission_files:
+            print(f"[AVISO] _loadMissionsForRover: Nenhum ficheiro mission*.json encontrado em {serverdb_dir}")
+            return
+        
+        print(f"[DEBUG] _loadMissionsForRover: Encontrados {len(mission_files)} ficheiros de missão")
+        missions_loaded = 0
+        
+        for mission_file in mission_files:
+            try:
+                with open(mission_file, 'r') as f:
+                    mission_data = json.load(f)
+                
+                # Verificar se a missão é para este rover
+                if mission_data.get("rover_id") == rover_id:
+                    mission_id = mission_data.get("mission_id", "unknown")
+                    print(f"[DEBUG] _loadMissionsForRover: Encontrada missão {mission_id} para rover {rover_id}")
+                    
+                    # Validar missão
+                    is_valid, error_msg = validateMission(mission_data)
+                    if not is_valid:
+                        print(f"[ERRO] _loadMissionsForRover: Missão {mission_id} inválida: {error_msg}")
+                        continue
+                    
+                    # Enviar missão para o rover
+                    rover_ip = self.agents.get(rover_id)
+                    if rover_ip:
+                        try:
+                            success = self.sendMission(rover_ip, rover_id, mission_data)
+                            if success:
+                                missions_loaded += 1
+                                print(f"[OK] _loadMissionsForRover: Missão {mission_id} enviada para rover {rover_id}")
+                            else:
+                                print(f"[ERRO] _loadMissionsForRover: Falha ao enviar missão {mission_id} para rover {rover_id}")
+                        except Exception as e:
+                            print(f"[ERRO] _loadMissionsForRover: Exceção ao enviar missão {mission_id}: {e}")
+                    else:
+                        print(f"[ERRO] _loadMissionsForRover: IP do rover {rover_id} não encontrado")
+                        
+            except Exception as e:
+                print(f"[ERRO] _loadMissionsForRover: Erro ao processar ficheiro {mission_file}: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        if missions_loaded > 0:
+            print(f"[OK] _loadMissionsForRover: {missions_loaded} missão(ões) carregada(s) para rover {rover_id}")
+        else:
+            print(f"[INFO] _loadMissionsForRover: Nenhuma missão encontrada para rover {rover_id} em {serverdb_dir}")
 
 
     def parseConfig(self,filename):

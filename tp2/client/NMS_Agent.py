@@ -3,6 +3,8 @@ from protocol import MissionLink,TelemetryStream
 import os
 import time
 import json
+import threading
+import math
 
 def validateMission(mission_data):
     """
@@ -454,10 +456,186 @@ class NMS_Agent:
             self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, mission_id)
             print(f"[DEBUG] recvMissionLink: ACK enviado")
             
+            # Iniciar execução da missão em thread separada
+            print(f"[DEBUG] recvMissionLink: Iniciando execução da missão {mission_id} em thread separada...")
+            mission_thread = threading.Thread(target=self.executeMission, args=(mission_data, self.serverAddress), daemon=True)
+            mission_thread.start()
+            print(f"[OK] Execução da missão {mission_id} iniciada")
+            
             return mission_data
         
         print(f"[DEBUG] recvMissionLink: Mensagem recebida não é uma missão (missionType={lista[2]}), retornando None")
         return None
+    
+    def executeMission(self, mission_data, server_ip):
+        """
+        Executa uma missão recebida, atualizando posição e enviando telemetria periodicamente.
+        
+        COMO FUNCIONA:
+        - Simula movimento do rover pela área geográfica da missão
+        - Atualiza posição gradualmente durante a execução
+        - Envia telemetria com a frequência especificada na missão
+        - Reporta progresso periodicamente à Nave-Mãe
+        - Atualiza estado operacional durante execução
+        
+        Args:
+            mission_data (dict): Dicionário com dados da missão
+            server_ip (str): Endereço IP da Nave-Mãe
+        """
+        mission_id = mission_data.get("mission_id", "unknown")
+        duration_minutes = mission_data.get("duration_minutes", 30)
+        update_frequency_seconds = mission_data.get("update_frequency_seconds", 120)
+        geographic_area = mission_data.get("geographic_area", {})
+        task = mission_data.get("task", "unknown")
+        
+        print(f"[INFO] executeMission: Iniciando execução da missão {mission_id}")
+        print(f"  Tarefa: {task}")
+        print(f"  Duração: {duration_minutes} minutos")
+        print(f"  Frequência de atualização: {update_frequency_seconds} segundos")
+        
+        # Extrair coordenadas da área geográfica
+        x1 = geographic_area.get("x1", 0.0)
+        y1 = geographic_area.get("y1", 0.0)
+        x2 = geographic_area.get("x2", 100.0)
+        y2 = geographic_area.get("y2", 100.0)
+        
+        # Calcular centro da área como destino inicial
+        center_x = (x1 + x2) / 2.0
+        center_y = (y1 + y2) / 2.0
+        
+        # Estado inicial: mover para a área da missão
+        self.updateOperationalStatus("a caminho")
+        self.updateVelocity(5.0)  # 5 m/s
+        
+        # Calcular direção para o centro da área
+        current_x = self.position["x"]
+        current_y = self.position["y"]
+        dx = center_x - current_x
+        dy = center_y - current_y
+        distance = (dx**2 + dy**2)**0.5
+        
+        if distance > 0.1:
+            direction_rad = math.atan2(dy, dx)
+            direction_deg = math.degrees(direction_rad)
+            self.updateDirection(direction_deg)
+        
+        # Simular movimento para a área da missão
+        steps_to_area = int(distance / 5.0) + 1  # Passos de 5 metros
+        for step in range(steps_to_area):
+            if distance > 0.1:
+                # Mover gradualmente em direção ao centro
+                progress = (step + 1) / steps_to_area
+                new_x = current_x + dx * progress
+                new_y = current_y + dy * progress
+                self.updatePosition(new_x, new_y, 0.0)
+            time.sleep(0.5)  # Pequeno delay para simular movimento
+        
+        # Chegou à área da missão - iniciar execução
+        self.updateOperationalStatus("em missão")
+        self.updateVelocity(2.0)  # Velocidade reduzida durante execução
+        
+        # Calcular número de atualizações durante a missão
+        total_duration_seconds = duration_minutes * 60
+        num_updates = max(1, int(total_duration_seconds / update_frequency_seconds))
+        
+        # Executar missão com atualizações periódicas
+        start_time = time.time()
+        update_count = 0
+        
+        # Padrão de movimento dentro da área (exploração em grid)
+        grid_steps_x = 5
+        grid_steps_y = 5
+        step_size_x = (x2 - x1) / grid_steps_x
+        step_size_y = (y2 - y1) / grid_steps_y
+        
+        for update_idx in range(num_updates):
+            elapsed_time = time.time() - start_time
+            progress_percent = min(100, int((elapsed_time / total_duration_seconds) * 100))
+            
+            # Calcular posição atual na área (movimento em grid)
+            grid_x = (update_idx % grid_steps_x)
+            grid_y = (update_idx // grid_steps_x) % grid_steps_y
+            
+            mission_x = x1 + grid_x * step_size_x
+            mission_y = y1 + grid_y * step_size_y
+            
+            # Garantir que está dentro dos limites
+            mission_x = max(x1, min(x2, mission_x))
+            mission_y = max(y1, min(y2, mission_y))
+            
+            # Atualizar posição
+            self.updatePosition(mission_x, mission_y, 0.0)
+            
+            # Atualizar bateria (diminui gradualmente)
+            battery_level = max(20.0, 100.0 - (elapsed_time / total_duration_seconds) * 30.0)
+            self.updateBattery(battery_level)
+            
+            # Atualizar temperatura (aumenta ligeiramente durante operação)
+            temperature = 20.0 + (elapsed_time / total_duration_seconds) * 15.0
+            self.updateTemperature(temperature)
+            
+            # Enviar telemetria com frequência da missão
+            print(f"[DEBUG] executeMission: Enviando telemetria {update_idx+1}/{num_updates} (progresso: {progress_percent}%)")
+            self.createAndSendTelemetry(server_ip)
+            
+            # Reportar progresso à Nave-Mãe
+            progress_data = {
+                "mission_id": mission_id,
+                "progress_percent": progress_percent,
+                "status": "in_progress" if progress_percent < 100 else "completed",
+                "current_position": {"x": mission_x, "y": mission_y},
+                "time_elapsed_minutes": elapsed_time / 60.0,
+                "estimated_completion_minutes": (total_duration_seconds - elapsed_time) / 60.0
+            }
+            
+            # Adicionar dados específicos da tarefa
+            if task == "capture_images":
+                progress_data["images_captured"] = update_idx * 3
+            elif task == "sample_collection":
+                progress_data["samples_collected"] = update_idx * 2
+            elif task == "environmental_analysis":
+                progress_data["analysis_points"] = update_idx * 5
+            
+            try:
+                self.reportMissionProgress(server_ip, mission_id, progress_data)
+            except Exception as e:
+                print(f"[AVISO] executeMission: Erro ao reportar progresso: {e}")
+            
+            # Aguardar até próxima atualização
+            if update_idx < num_updates - 1:
+                time.sleep(update_frequency_seconds)
+            
+            update_count += 1
+        
+        # Missão concluída
+        self.updateOperationalStatus("parado")
+        self.updateVelocity(0.0)
+        
+        # Reportar conclusão
+        final_progress = {
+            "mission_id": mission_id,
+            "progress_percent": 100,
+            "status": "completed",
+            "current_position": {"x": mission_x, "y": mission_y},
+            "time_elapsed_minutes": duration_minutes
+        }
+        
+        if task == "capture_images":
+            final_progress["images_captured"] = update_count * 3
+        elif task == "sample_collection":
+            final_progress["samples_collected"] = update_count * 2
+        elif task == "environmental_analysis":
+            final_progress["analysis_points"] = update_count * 5
+        
+        try:
+            self.reportMissionProgress(server_ip, mission_id, final_progress)
+            print(f"[OK] executeMission: Missão {mission_id} concluída com sucesso")
+        except Exception as e:
+            print(f"[AVISO] executeMission: Erro ao reportar conclusão: {e}")
+        
+        # Remover missão da lista de tarefas ativas
+        if mission_id in self.tasks:
+            del self.tasks[mission_id]
 
     def reportMissionProgress(self, ip, mission_id, progress_data):
         """
