@@ -272,6 +272,8 @@ class NMS_Agent:
         
         if retries >= max_retries:
             raise Exception(f"Máximo de tentativas ({max_retries}) atingido ao registar")
+        
+        print(f"[INFO] Conectado à Nave-Mãe {ip}")
     
     def registerAgent(self, ip):
         """
@@ -420,7 +422,7 @@ class NMS_Agent:
                 self.mission_executing = True
                 self.current_mission = mission_data
                 self.mission_telemetry_interval = mission_data.get("update_frequency_seconds", 30)
-                print(f"[OK] Missão {mission_id} recebida - iniciando execução")
+                print(f"[INFO] Missão ID: {mission_id} recebida - iniciando execução")
                 mission_thread = threading.Thread(target=self.executeMission, args=(mission_data, self.serverAddress), daemon=True)
                 mission_thread.start()
             
@@ -872,7 +874,7 @@ class NMS_Agent:
                     success = self.createAndSendTelemetry(server_ip, None, filename)
                     
                     if success:
-                        print(f"[OK] Telemetria enviada para {server_ip}")
+                        print(f"[INFO] Telemetria enviada para {server_ip}")
                     
                     time.sleep(self.telemetry_interval)
                     

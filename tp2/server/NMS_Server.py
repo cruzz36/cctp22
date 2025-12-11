@@ -345,6 +345,7 @@ class NMS_Server:
                     self.tasks[mission_id] = mission_data
                 else:
                     self.tasks[mission_id] = mission_json
+                print(f"[INFO] Missão {mission_id} confirmada por rover {idAgent}")
                 return True
             
             # Retransmitir
@@ -368,7 +369,7 @@ class NMS_Server:
         """
         if self.agents.get(idAgent) == None:
             self.agents[idAgent] = ip
-            print(f"[OK] Rover {idAgent} registado (IP: {ip})")
+            print(f"[INFO] Rover {idAgent} conectado (IP: {ip})")
             self.missionLink.send(ip,self.missionLink.port,None,idAgent,"000","Registered")
             # Carregar missões do serverDB para este rover
             self._loadMissionsForRover(idAgent)
@@ -431,7 +432,7 @@ class NMS_Server:
                             try:
                                 success = self.sendMission(rover_ip, rover_id, mission_data)
                                 if success:
-                                    print(f"[OK] Missão {mission_id} enviada para rover {rover_id}")
+                                    print(f"[INFO] Missão {mission_id} enviada para rover {rover_id}")
                                     first_mission_sent = True
                                     continue  # Pular para próxima iteração
                             except Exception:
