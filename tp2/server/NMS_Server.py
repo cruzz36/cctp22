@@ -401,7 +401,7 @@ class NMS_Server:
                 if mission_data.get("rover_id") == rover_id:
                     mission_id = mission_data.get("mission_id", "unknown")
                     
-                    # Validar missão
+                    # Validar missão (ignorar campos opcionais como update_frequency_seconds se existirem)
                     is_valid, error_msg = validateMission(mission_data)
                     if not is_valid:
                         continue
@@ -409,6 +409,25 @@ class NMS_Server:
                     # Verificar se já foi enviada (está em self.tasks)
                     if mission_id in self.tasks:
                         continue  # Missão já enviada, pular
+                    
+                    # Verificar se já está na fila para evitar duplicados
+                    already_in_queue = False
+                    for pending in self.pendingMissions:
+                        if isinstance(pending, dict):
+                            if pending.get("mission_id") == mission_id:
+                                already_in_queue = True
+                                break
+                        elif isinstance(pending, str):
+                            try:
+                                pending_dict = json.loads(pending)
+                                if pending_dict.get("mission_id") == mission_id:
+                                    already_in_queue = True
+                                    break
+                            except:
+                                pass
+                    
+                    if already_in_queue:
+                        continue  # Já está na fila, pular
                     
                     if not first_mission_sent:
                         # Enviar apenas a primeira missão encontrada
@@ -423,10 +442,8 @@ class NMS_Server:
                                 pass
                     
                     # Adicionar missões restantes à fila de pendentes
-                    if first_mission_sent:
-                        # Verificar se já foi enviada (está em self.tasks)
-                        if mission_id not in self.tasks:
-                            self.pendingMissions.append(mission_data)
+                    # (adicionar todas as missões que não foram enviadas)
+                    self.pendingMissions.append(mission_data)
                         
             except Exception:
                 pass

@@ -499,11 +499,12 @@ class NMS_Agent:
             if update_idx < num_updates - 1:
                 time.sleep(update_interval_seconds)
         
-        # Missão concluída
+        # Enviar telemetria final antes de concluir missão
+        self.createAndSendTelemetry(server_ip)
+        
+        # Atualizar estado para "parado"
         self.updateOperationalStatus("parado")
         self.updateVelocity(0.0)
-        
-        # A telemetria contínua (30s) irá mostrar o estado "parado" automaticamente
         
         print(f"[OK] Missão {mission_id} concluída")
         
@@ -526,26 +527,30 @@ class NMS_Agent:
                 next_thread.start()
             else:
                 # Não há mais missões na fila local - solicitar próxima missão à Nave-Mãe
+                # Parar telemetria antes de solicitar nova missão
+                if self.telemetry_running:
+                    self.stopContinuousTelemetry()
+                
+                # Pequeno delay para garantir que a última telemetria foi enviada
+                time.sleep(1)
+                
                 print(f"[INFO] Missão concluída - solicitando próxima missão à Nave-Mãe")
                 try:
                     next_mission = self.requestMission(server_ip)
                     if next_mission:
-                        # Nova missão recebida - iniciar execução
+                        # Nova missão recebida - reiniciar telemetria e iniciar execução
                         self.mission_executing = True
                         self.current_mission = next_mission
                         print(f"[INFO] Nova missão recebida: {next_mission.get('mission_id')} - iniciando execução")
+                        # Reiniciar telemetria para a nova missão
+                        self.startContinuousTelemetry(server_ip, interval_seconds=self.telemetry_interval)
                         mission_thread = threading.Thread(target=self.executeMission, args=(next_mission, server_ip), daemon=True)
                         mission_thread.start()
                     else:
-                        # Não há mais missões disponíveis - parar telemetria contínua
-                        if self.telemetry_running:
-                            print(f"[INFO] Sem mais missões disponíveis - parando telemetria contínua")
-                            self.stopContinuousTelemetry()
+                        # Não há mais missões disponíveis
+                        print(f"[INFO] Sem mais missões disponíveis")
                 except Exception as e:
                     print(f"[ERRO] Erro ao solicitar próxima missão: {e}")
-                    # Parar telemetria se falhar
-                    if self.telemetry_running:
-                        self.stopContinuousTelemetry()
 
     def sendTelemetry(self,ip,message):
         """
