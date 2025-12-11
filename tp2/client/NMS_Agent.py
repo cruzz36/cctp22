@@ -582,12 +582,6 @@ class NMS_Agent:
             "timestamp": datetime.now().isoformat()  # Adicionar timestamp ISO 8601
         }
         
-        # Adicionar ID da missão atual (se houver)
-        if self.current_mission and isinstance(self.current_mission, dict):
-            telemetry["mission_id"] = self.current_mission.get("mission_id", "N/A")
-        else:
-            telemetry["mission_id"] = "N/A"
-        
         # Adicionar campos opcionais
         telemetry["battery"] = self.battery
         telemetry["velocity"] = self.velocity
