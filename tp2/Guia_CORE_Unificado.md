@@ -365,12 +365,12 @@ Dentro do core
 
 ground control: 
 ip route add 10.0.1.0/24 via 10.0.0.11 
-.
+
 
 navemae: 
 ip route add 10.0.2.0/24 via 10.0.1.1
 ip route add 10.0.3.0/24 via 10.0.1.1
-.
+
 
 satelite:
 cat /proc/sys/net/ipv4/ip_forward
