@@ -537,6 +537,9 @@ class ObservationAPI:
         Returns:
             list: Lista de dados de telemetria
         """
+        # Limpar ficheiros antigos periodicamente (manter apenas os 50 mais recentes por rover)
+        self._cleanup_old_telemetry_files(max_files_per_rover=50)
+        
         telemetry_folder = self.nms_server.telemetryStream.storefolder
         telemetry_data = []
         
@@ -641,6 +644,45 @@ class ObservationAPI:
         
         # Retornar apenas os N mais recentes
         return telemetry_data[:limit]
+    
+    def _cleanup_old_telemetry_files(self, max_files_per_rover=50):
+        """
+        Remove ficheiros de telemetria antigos, mantendo apenas os N mais recentes por rover.
+        Evita acumulação excessiva de ficheiros.
+        
+        Args:
+            max_files_per_rover (int): Número máximo de ficheiros a manter por rover
+        """
+        telemetry_folder = self.nms_server.telemetryStream.storefolder
+        
+        if not os.path.exists(telemetry_folder):
+            return
+        
+        try:
+            # Processar cada pasta de rover
+            for rover_id in os.listdir(telemetry_folder):
+                rover_folder = os.path.join(telemetry_folder, rover_id)
+                if not os.path.isdir(rover_folder):
+                    continue
+                
+                # Obter todos os ficheiros JSON
+                files = [os.path.join(rover_folder, f) for f in os.listdir(rover_folder) if f.endswith('.json')]
+                
+                if len(files) <= max_files_per_rover:
+                    continue  # Não precisa limpar
+                
+                # Ordenar por data de modificação (mais recente primeiro)
+                files.sort(key=os.path.getmtime, reverse=True)
+                
+                # Remover ficheiros antigos (manter apenas os N mais recentes)
+                files_to_remove = files[max_files_per_rover:]
+                for file_path in files_to_remove:
+                    try:
+                        os.remove(file_path)
+                    except Exception:
+                        pass
+        except Exception:
+            pass  # Ignorar erros na limpeza
     
     def _get_last_telemetry_time(self, rover_id: str) -> Optional[str]:
         """
