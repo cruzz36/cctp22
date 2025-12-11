@@ -60,9 +60,11 @@ class TelemetryStream:
             ip (str): Endereço IP do cliente
             port (int): Porta do cliente
         """
+        print(f"[DEBUG] TelemetryStream._handle_client: Processando conexão de {ip}:{port}")
         try:
             filename = self.recv(clientSocket, ip, port)
             filename_str = filename.decode()
+            print(f"[DEBUG] TelemetryStream._handle_client: Ficheiro recebido: {filename_str}")
             
             # Tentar organizar por rover_id se o ficheiro contém telemetria JSON
             rover_id = "unknown"
@@ -77,14 +79,16 @@ class TelemetryStream:
                         new_path = os.path.join(rover_folder, filename_str)
                         if os.path.exists(file_path) and file_path != new_path:
                             os.rename(file_path, new_path)
-            except (json.JSONDecodeError, KeyError, OSError):
-                pass
+                            print(f"[DEBUG] TelemetryStream._handle_client: Ficheiro organizado em {rover_folder}/")
+            except (json.JSONDecodeError, KeyError, OSError) as e:
+                print(f"[DEBUG] TelemetryStream._handle_client: Erro ao organizar ficheiro: {e}")
             
             print(f"[OK] Telemetria recebida de {rover_id} ({ip}): {filename_str}")
             
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[DEBUG] TelemetryStream._handle_client: Erro ao processar conexão: {e}")
         finally:
+            print(f"[DEBUG] TelemetryStream._handle_client: Fechando conexão com {ip}:{port}")
             clientSocket.close()
     
     def server(self):
@@ -106,11 +110,15 @@ class TelemetryStream:
         
         NOTA: Este método bloqueia indefinidamente - deve ser executado em thread separada
         """
+        print(f"[DEBUG] TelemetryStream.server: Iniciando servidor em {self.ip}:{self.port}")
         self.socket.listen()
+        print(f"[DEBUG] TelemetryStream.server: Servidor a escutar, aguardando conexões...")
         
         while True:
             try:
+                print(f"[DEBUG] TelemetryStream.server: Aguardando nova conexão...")
                 clientSocket, (ip, _) = self.socket.accept()
+                print(f"[DEBUG] TelemetryStream.server: Nova conexão TCP recebida de {ip}")
                 # Criar thread para processar conexão em paralelo
                 client_thread = threading.Thread(
                     target=self._handle_client,
@@ -118,7 +126,9 @@ class TelemetryStream:
                     daemon=True
                 )
                 client_thread.start()
-            except Exception:
+                print(f"[DEBUG] TelemetryStream.server: Thread criada para processar conexão de {ip}")
+            except Exception as e:
+                print(f"[DEBUG] TelemetryStream.server: Erro ao aceitar conexão: {e}")
                 continue
                 import traceback
                 traceback.print_exc()
@@ -239,36 +249,47 @@ class TelemetryStream:
         # Criar novo socket para cada envio (evita conflito com socket do servidor)
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
+        print(f"[DEBUG] TelemetryStream.send: Preparando envio de telemetria para {ip}:{self.port}")
         try:
             # Verificar se ficheiro existe antes de tentar enviar
             if not os.path.exists(message):
+                print(f"[DEBUG] TelemetryStream.send: Ficheiro {message} não encontrado")
                 return False
             
             # Extrair apenas o nome do ficheiro (sem caminho completo)
             filename = os.path.basename(message)
+            print(f"[DEBUG] TelemetryStream.send: Ficheiro encontrado: {filename}, conectando a {ip}:{self.port}...")
             
             # Conectar ao servidor
             client_socket.connect((ip, self.port))
+            print(f"[DEBUG] TelemetryStream.send: Conectado a {ip}:{self.port}, enviando ficheiro...")
             
             # Enviar tamanho do nome do ficheiro (4 bytes)
             length = self.formatInteger(len(filename))
             client_socket.sendall(length.encode())
+            print(f"[DEBUG] TelemetryStream.send: Tamanho do nome enviado: {len(filename)} bytes")
             
             # Enviar nome do ficheiro
             client_socket.sendall(filename.encode())
+            print(f"[DEBUG] TelemetryStream.send: Nome do ficheiro enviado: {filename}")
             
             # Enviar conteúdo do ficheiro em chunks
+            chunks_sent = 0
             with open(message, "r") as file:
                 buffer = file.read(self.limit.buffersize)
                 while buffer != "":
                     client_socket.sendall(buffer.encode())
+                    chunks_sent += 1
                     buffer = file.read(self.limit.buffersize)
+            print(f"[DEBUG] TelemetryStream.send: Conteúdo enviado em {chunks_sent} chunks")
             
             # Fechar conexão
             client_socket.close()
+            print(f"[DEBUG] TelemetryStream.send: Conexão fechada, envio concluído")
             return True
             
-        except Exception:
+        except Exception as e:
+            print(f"[DEBUG] TelemetryStream.send: Erro ao enviar: {e}")
             try:
                 client_socket.close()
             except:

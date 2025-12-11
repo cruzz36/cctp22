@@ -261,18 +261,26 @@ class NMS_Agent:
         Args:
             ip (str): Endereço IP da Nave-Mãe
         """
+        print(f"[DEBUG] register: Iniciando registo na Nave-Mãe {ip} (rover_id={self.id})")
+        print(f"[DEBUG] register: Enviando pedido de registo...")
         self.missionLink.send(ip,self.missionLink.port,self.missionLink.registerAgent,self.id,"000","\0")
+        print(f"[DEBUG] register: Aguardando confirmação de registo...")
         lista = self.missionLink.recv()
+        print(f"[DEBUG] register: Resposta recebida: idAgent={lista[0]}, ip={lista[4]}, message={lista[3]}")
         retries = 0
         max_retries = 10
         while (lista[0] != self.id or lista[4] != ip) and retries < max_retries:
             retries += 1
+            print(f"[DEBUG] register: Resposta inválida (esperado idAgent={self.id}, ip={ip}, recebido idAgent={lista[0]}, ip={lista[4]}). Retry {retries}/{max_retries}")
             self.missionLink.send(ip,self.missionLink.port,self.missionLink.registerAgent,self.id,"000","\0")
             lista = self.missionLink.recv()
+            print(f"[DEBUG] register: Nova resposta recebida: idAgent={lista[0]}, ip={lista[4]}, message={lista[3]}")
         
         if retries >= max_retries:
+            print(f"[DEBUG] register: Máximo de tentativas atingido")
             raise Exception(f"Máximo de tentativas ({max_retries}) atingido ao registar")
         
+        print(f"[DEBUG] register: Registo confirmado com sucesso")
         print(f"[INFO] Conectado à Nave-Mãe {ip}")
     
     def registerAgent(self, ip):
@@ -385,26 +393,33 @@ class NMS_Agent:
         Returns:
             dict or None: Dicionário com dados da missão validada, ou None se não for missão válida
         """
+        print(f"[DEBUG] recvMissionLink: Aguardando mensagem do MissionLink...")
         lista = self.missionLink.recv()
+        print(f"[DEBUG] recvMissionLink: Mensagem recebida: idAgent={lista[0]}, idMission={lista[1]}, missionType={lista[2]}, ip={lista[4]}")
         
         if lista[2] == self.missionLink.taskRequest:
             mission_message = lista[3]
             mission_id = lista[1]
+            print(f"[DEBUG] recvMissionLink: Recebida missão {mission_id}, validando formato...")
             
             # Validar formato da missão
             is_valid, error_msg = validateMission(mission_message)
             
             if not is_valid:
+                print(f"[DEBUG] recvMissionLink: Missão inválida: {error_msg}")
                 self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, "invalid")
                 return None
             
+            print(f"[DEBUG] recvMissionLink: Missão validada, fazendo parse do JSON...")
             # Parse do JSON da missão
             try:
                 if isinstance(mission_message, str):
                     mission_data = json.loads(mission_message)
                 else:
                     mission_data = mission_message
-            except json.JSONDecodeError:
+                print(f"[DEBUG] recvMissionLink: JSON parseado com sucesso")
+            except json.JSONDecodeError as e:
+                print(f"[DEBUG] recvMissionLink: Erro ao fazer parse do JSON: {e}")
                 self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, "parse_error")
                 return None
             
@@ -412,22 +427,27 @@ class NMS_Agent:
             self.tasks[mission_id] = mission_data
             
             # Enviar ACK de confirmação
+            print(f"[DEBUG] recvMissionLink: Enviando ACK de confirmação para {lista[4]}")
             self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, mission_id)
+            print(f"[DEBUG] recvMissionLink: ACK enviado")
             
             # Verificar se já há missão em execução
             if self.mission_executing:
                 self.mission_queue.append(mission_data)
+                print(f"[DEBUG] recvMissionLink: Missão adicionada à fila (missão atual em execução)")
                 print(f"[INFO] Missão {mission_id} adicionada à fila")
             else:
                 self.mission_executing = True
                 self.current_mission = mission_data
                 self.mission_telemetry_interval = mission_data.get("update_frequency_seconds", 30)
+                print(f"[DEBUG] recvMissionLink: Iniciando execução da missão em thread separada")
                 print(f"[INFO] Missão ID: {mission_id} recebida - iniciando execução")
                 mission_thread = threading.Thread(target=self.executeMission, args=(mission_data, self.serverAddress), daemon=True)
                 mission_thread.start()
             
             return mission_data
         
+        print(f"[DEBUG] recvMissionLink: Mensagem recebida não é uma missão (missionType={lista[2]})")
         return None
     
     def executeMission(self, mission_data, server_ip):
@@ -867,18 +887,25 @@ class NMS_Agent:
             Conforme requisitos do PDF: "Os rovers devem reportar dados de monitorização 
             continuamente para garantir que estão a operar corretamente."
             """
+            print(f"[DEBUG] telemetry_loop: Iniciando loop de telemetria (intervalo={self.telemetry_interval}s)")
             time.sleep(self.telemetry_interval)  # Aguardar intervalo antes do primeiro envio
             while self.telemetry_running:
                 try:
                     filename = f"telemetry_{self.id}_{int(time.time())}.json"
+                    print(f"[DEBUG] telemetry_loop: Criando e enviando telemetria: {filename}")
                     success = self.createAndSendTelemetry(server_ip, None, filename)
                     
                     if success:
+                        print(f"[DEBUG] telemetry_loop: Telemetria enviada com sucesso")
                         print(f"[INFO] Telemetria enviada para {server_ip}")
+                    else:
+                        print(f"[DEBUG] telemetry_loop: Falha ao enviar telemetria")
                     
+                    print(f"[DEBUG] telemetry_loop: Aguardando {self.telemetry_interval}s até próximo envio...")
                     time.sleep(self.telemetry_interval)
                     
-                except Exception:
+                except Exception as e:
+                    print(f"[DEBUG] telemetry_loop: Erro no loop de telemetria: {e}")
                     # Continuar mesmo em caso de erro
                     time.sleep(self.telemetry_interval)
         
