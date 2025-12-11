@@ -273,7 +273,7 @@ class NMS_Agent:
         if retries >= max_retries:
             raise Exception(f"Máximo de tentativas ({max_retries}) atingido ao registar")
         
-        print(f"[INFO] Conectado à Nave-Mãe {ip}")
+        print(f"[INFO] Rover {self.id} conectado à Nave-Mãe {ip}")
     
     def registerAgent(self, ip):
         """

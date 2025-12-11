@@ -316,7 +316,6 @@ class NMS_Server:
         
         # Enviar missão via MissionLink
         self.missionLink.send(ip, self.missionLink.port, self.missionLink.taskRequest, idAgent, mission_id, mission_json)
-        print(f"[INFO] Missão {mission_id} enviada para rover {idAgent}")
         
         # Aguardar confirmação
         lista = self.missionLink.recv()
@@ -334,7 +333,7 @@ class NMS_Server:
                     self.tasks[mission_id] = mission_data
                 else:
                     self.tasks[mission_id] = mission_json
-                print(f"[INFO] Missão {mission_id} confirmada por rover {idAgent}")
+                print(f"[INFO] Missão {mission_id} enviada e confirmada por rover {idAgent}")
                 return True
             
             # Retransmitir
@@ -342,6 +341,7 @@ class NMS_Server:
             self.missionLink.send(ip, self.missionLink.port, self.missionLink.taskRequest, idAgent, mission_id, mission_json)
             lista = self.missionLink.recv()
         
+        print(f"[ERRO] Missão {mission_id} não confirmada por rover {idAgent} após {max_retries} tentativas")
         return False
 
 
@@ -358,7 +358,7 @@ class NMS_Server:
         """
         if self.agents.get(idAgent) == None:
             self.agents[idAgent] = ip
-            print(f"[INFO] Rover {idAgent} conectado (IP: {ip})")
+            print(f"[INFO] Nave-Mãe conectada ao rover {idAgent} (IP: {ip})")
             self.missionLink.send(ip,self.missionLink.port,None,idAgent,"000","Registered")
             # Carregar missões do serverDB para este rover
             self._loadMissionsForRover(idAgent)
@@ -400,7 +400,7 @@ class NMS_Server:
         # As outras missões serão enviadas quando o rover solicitar ou quando a atual for concluída
         first_mission_sent = False
         
-        for mission_file in mission_files:
+        for mission_file in sorted(mission_files):  # Ordenar para garantir ordem consistente
             try:
                 with open(mission_file, 'r') as f:
                     mission_data = json.load(f)
@@ -414,6 +414,10 @@ class NMS_Server:
                     if not is_valid:
                         continue
                     
+                    # Verificar se já foi enviada (está em self.tasks)
+                    if mission_id in self.tasks:
+                        continue  # Missão já enviada, pular
+                    
                     if not first_mission_sent:
                         # Enviar apenas a primeira missão encontrada
                         rover_ip = self.agents.get(rover_id)
@@ -421,7 +425,6 @@ class NMS_Server:
                             try:
                                 success = self.sendMission(rover_ip, rover_id, mission_data)
                                 if success:
-                                    print(f"[INFO] Missão {mission_id} enviada para rover {rover_id}")
                                     first_mission_sent = True
                                     continue  # Pular para próxima iteração
                             except Exception:
