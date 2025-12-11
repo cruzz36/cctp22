@@ -214,6 +214,8 @@ class NMS_Agent:
         self.telemetry_thread = None  # Thread para monitorização contínua
         self.telemetry_running = False  # Flag para controlar loop
         self.telemetry_interval = 30  # Intervalo padrão em segundos
+        self.current_mission = None  # Missão atualmente em execução (para ajustar frequência de telemetria)
+        self.mission_telemetry_interval = None  # Intervalo de telemetria da missão atual
 
     # def sendMetrics(self,ip,filename:str):
     #     """
@@ -456,6 +458,11 @@ class NMS_Agent:
             self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, mission_id)
             print(f"[DEBUG] recvMissionLink: ACK enviado")
             
+            # Armazenar missão atual e ajustar frequência de telemetria
+            self.current_mission = mission_data
+            self.mission_telemetry_interval = mission_data.get("update_frequency_seconds", 30)
+            print(f"[DEBUG] recvMissionLink: Missão {mission_id} definida como atual (frequência telemetria: {self.mission_telemetry_interval}s)")
+            
             # Iniciar execução da missão em thread separada
             print(f"[DEBUG] recvMissionLink: Iniciando execução da missão {mission_id} em thread separada...")
             mission_thread = threading.Thread(target=self.executeMission, args=(mission_data, self.serverAddress), daemon=True)
@@ -633,9 +640,15 @@ class NMS_Agent:
         except Exception as e:
             print(f"[AVISO] executeMission: Erro ao reportar conclusão: {e}")
         
-        # Remover missão da lista de tarefas ativas
+        # Remover missão da lista de tarefas ativas e limpar missão atual
         if mission_id in self.tasks:
             del self.tasks[mission_id]
+        
+        # Limpar missão atual (telemetria contínua voltará ao intervalo padrão)
+        if self.current_mission and self.current_mission.get("mission_id") == mission_id:
+            self.current_mission = None
+            self.mission_telemetry_interval = None
+            print(f"[DEBUG] executeMission: Missão {mission_id} removida, telemetria contínua volta ao intervalo padrão")
 
     def reportMissionProgress(self, ip, mission_id, progress_data):
         """
@@ -949,6 +962,17 @@ class NMS_Agent:
             time.sleep(self.telemetry_interval)  # Aguardar intervalo antes do primeiro envio
             while self.telemetry_running:
                 try:
+                    # Se há uma missão em execução, usar a frequência da missão em vez do intervalo padrão
+                    # Mas só enviar se não estivermos já a enviar telemetria da missão
+                    # (a missão envia a sua própria telemetria, então pausamos a contínua durante execução)
+                    if self.current_mission is not None:
+                        # Durante execução de missão, pausar telemetria contínua
+                        # A missão envia telemetria com a sua própria frequência
+                        current_interval = self.mission_telemetry_interval if self.mission_telemetry_interval else self.telemetry_interval
+                        print(f"[DEBUG] telemetry_loop: Missão em execução ({self.current_mission.get('mission_id')}), pausando telemetria contínua (missão usa {current_interval}s)")
+                        time.sleep(current_interval)
+                        continue
+                    
                     iteration += 1
                     filename = f"telemetry_{self.id}_{int(time.time())}.json"
                     print(f"[DEBUG] telemetry_loop: Iteração {iteration}, criando e enviando telemetria...")
