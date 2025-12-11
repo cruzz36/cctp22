@@ -8,6 +8,6 @@
     "y2": 175.0
   },
   "task": "sample_collection",
-  "duration_minutes": 20,
+  "duration_minutes": 4,
   "update_frequency_seconds": 90
 }

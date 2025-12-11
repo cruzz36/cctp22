@@ -8,7 +8,7 @@
     "y2": 60.0
   },
   "task": "capture_images",
-  "duration_minutes": 30,
+  "duration_minutes": 2,
   "update_frequency_seconds": 120
 }
 
