@@ -283,53 +283,43 @@ class NMS_Agent:
         Solicita uma missão à Nave-Mãe através do MissionLink.
         Implementa o requisito: "O rover deve ser capaz de solicitar uma missão à Nave-Mãe."
         
+        A Nave-Mãe responderá enviando a missão através do MissionLink, que será recebida
+        pelo recvMissionLink() que está a correr numa thread separada.
+        
         Args:
             ip (str): Endereço IP da Nave-Mãe
             
         Returns:
-            dict or None: Dicionário com dados da missão recebida, ou None se não houver missão disponível
+            bool: True se o pedido foi enviado com sucesso, False caso contrário
         """
-        # Enviar solicitação de missão
-        self.missionLink.send(ip, self.missionLink.port, self.missionLink.requestMission, self.id, "000", "request")
+        # Pequeno delay para garantir que a Nave-Mãe está pronta
+        time.sleep(0.5)
         
-        # Aguardar resposta (pode ser missão ou mensagem de "sem missão disponível")
-        try:
-            response = self.missionLink.recv()
-            if response[2] == self.missionLink.taskRequest:
-                mission_message = response[3]
-                mission_id = response[1]
-                
-                # Validar formato da missão
-                is_valid, error_msg = validateMission(mission_message)
-                
-                if not is_valid:
-                    self.missionLink.send(response[4], self.missionLink.port, None, self.id, mission_id, "invalid")
-                    return None
-                
-                # Parse do JSON da missão
-                try:
-                    if isinstance(mission_message, str):
-                        mission_data = json.loads(mission_message)
-                    else:
-                        mission_data = mission_message
-                except json.JSONDecodeError:
-                    self.missionLink.send(response[4], self.missionLink.port, None, self.id, mission_id, "parse_error")
-                    return None
-                
-                # Armazenar missão validada
-                self.tasks[mission_id] = mission_data
-                
-                # Enviar ACK de confirmação
-                self.missionLink.send(response[4], self.missionLink.port, None, self.id, mission_id, mission_id)
-                
-                return mission_data
-            elif response[2] == self.missionLink.noneType:
-                if response[3] == "no_mission":
-                    print(f"[INFO] requestMission: Nave-Mãe respondeu: sem missão disponível no momento")
-                return None
-        except Exception as e:
-            print(f"[ERRO] requestMission: Erro ao solicitar missão: {e}")
-            return None
+        # Enviar solicitação de missão com retry
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                # Enviar apenas o pedido - a resposta virá através do recvMissionLink()
+                self.missionLink.send(ip, self.missionLink.port, self.missionLink.requestMission, self.id, "000", "request")
+                return True
+            except TimeoutError as e:
+                if attempt < max_retries - 1:
+                    print(f"[INFO] Tentativa {attempt + 1}/{max_retries} falhou, a tentar novamente...")
+                    time.sleep(1)
+                    continue
+                else:
+                    print(f"[ERRO] requestMission: Timeout após {max_retries} tentativas: {e}")
+                    return False
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"[INFO] Tentativa {attempt + 1}/{max_retries} falhou: {e}, a tentar novamente...")
+                    time.sleep(1)
+                    continue
+                else:
+                    print(f"[ERRO] requestMission: Erro ao solicitar missão após {max_retries} tentativas: {e}")
+                    return False
+        
+        return False
 
     def recvMissionLink(self):
         """
@@ -389,6 +379,11 @@ class NMS_Agent:
                 self.mission_executing = True
                 self.current_mission = mission_data
                 print(f"[INFO] Missão ID: {mission_id} recebida - iniciando execução")
+                
+                # Reiniciar telemetria se estiver parada
+                if not self.telemetry_running:
+                    self.startContinuousTelemetry(self.serverAddress, interval_seconds=self.telemetry_interval)
+                
                 mission_thread = threading.Thread(target=self.executeMission, args=(mission_data, self.serverAddress), daemon=True)
                 mission_thread.start()
             
@@ -536,19 +531,14 @@ class NMS_Agent:
                 
                 print(f"[INFO] Missão concluída - solicitando próxima missão à Nave-Mãe")
                 try:
-                    next_mission = self.requestMission(server_ip)
-                    if next_mission:
-                        # Nova missão recebida - reiniciar telemetria e iniciar execução
-                        self.mission_executing = True
-                        self.current_mission = next_mission
-                        print(f"[INFO] Nova missão recebida: {next_mission.get('mission_id')} - iniciando execução")
-                        # Reiniciar telemetria para a nova missão
-                        self.startContinuousTelemetry(server_ip, interval_seconds=self.telemetry_interval)
-                        mission_thread = threading.Thread(target=self.executeMission, args=(next_mission, server_ip), daemon=True)
-                        mission_thread.start()
+                    # Enviar pedido de missão - a resposta virá através do recvMissionLink()
+                    request_sent = self.requestMission(server_ip)
+                    if request_sent:
+                        print(f"[INFO] Pedido de missão enviado - aguardando resposta da Nave-Mãe")
+                        # A missão será recebida pelo recvMissionLink() e iniciada automaticamente
                     else:
-                        # Não há mais missões disponíveis
-                        print(f"[INFO] Sem mais missões disponíveis")
+                        # Não foi possível enviar o pedido
+                        print(f"[INFO] Não foi possível solicitar próxima missão")
                 except Exception as e:
                     print(f"[ERRO] Erro ao solicitar próxima missão: {e}")
 
