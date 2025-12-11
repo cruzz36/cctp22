@@ -525,10 +525,27 @@ class NMS_Agent:
                 next_thread = threading.Thread(target=self.executeMission, args=(next_mission, server_ip), daemon=True)
                 next_thread.start()
             else:
-                # Não há mais missões - parar telemetria contínua
-                if self.telemetry_running:
-                    print(f"[INFO] Sem mais missões - parando telemetria contínua")
-                    self.stopContinuousTelemetry()
+                # Não há mais missões na fila local - solicitar próxima missão à Nave-Mãe
+                print(f"[INFO] Missão concluída - solicitando próxima missão à Nave-Mãe")
+                try:
+                    next_mission = self.requestMission(server_ip)
+                    if next_mission:
+                        # Nova missão recebida - iniciar execução
+                        self.mission_executing = True
+                        self.current_mission = next_mission
+                        print(f"[INFO] Nova missão recebida: {next_mission.get('mission_id')} - iniciando execução")
+                        mission_thread = threading.Thread(target=self.executeMission, args=(next_mission, server_ip), daemon=True)
+                        mission_thread.start()
+                    else:
+                        # Não há mais missões disponíveis - parar telemetria contínua
+                        if self.telemetry_running:
+                            print(f"[INFO] Sem mais missões disponíveis - parando telemetria contínua")
+                            self.stopContinuousTelemetry()
+                except Exception as e:
+                    print(f"[ERRO] Erro ao solicitar próxima missão: {e}")
+                    # Parar telemetria se falhar
+                    if self.telemetry_running:
+                        self.stopContinuousTelemetry()
 
     def sendTelemetry(self,ip,message):
         """

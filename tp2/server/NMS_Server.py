@@ -545,17 +545,65 @@ class NMS_Server:
     def handleMissionRequest(self, idAgent, ip):
         """
         Processa solicitação de missão de um rover.
+        Procura missões pendentes específicas para este rover.
         """
-        if self.pendingMissions:
-            mission = self.pendingMissions.pop(0)
+        # Procurar missão pendente específica para este rover
+        mission_to_send = None
+        for i, mission in enumerate(self.pendingMissions):
+            if isinstance(mission, str):
+                try:
+                    mission = json.loads(mission)
+                except:
+                    continue
+            
+            if mission.get("rover_id") == idAgent:
+                # Encontrou missão para este rover
+                mission_to_send = self.pendingMissions.pop(i)
+                break
+        
+        # Se não encontrou missão específica, procurar qualquer missão pendente
+        if mission_to_send is None and self.pendingMissions:
+            mission_to_send = self.pendingMissions.pop(0)
+        
+        if mission_to_send:
             try:
-                success = self.sendMission(ip, idAgent, mission)
+                success = self.sendMission(ip, idAgent, mission_to_send)
                 if not success:
-                    self.pendingMissions.insert(0, mission)
+                    self.pendingMissions.insert(0, mission_to_send)
             except Exception:
-                self.pendingMissions.insert(0, mission)
+                self.pendingMissions.insert(0, mission_to_send)
         else:
-            self.missionLink.send(ip, self.missionLink.port, None, idAgent, "000", "no_mission")
+            # Se não há missões pendentes, verificar se há mais missões no serverDB para este rover
+            self._loadMissionsForRover(idAgent)
+            
+            # Tentar novamente após carregar
+            if self.pendingMissions:
+                mission_to_send = None
+                for i, mission in enumerate(self.pendingMissions):
+                    if isinstance(mission, str):
+                        try:
+                            mission = json.loads(mission)
+                        except:
+                            continue
+                    
+                    if mission.get("rover_id") == idAgent:
+                        mission_to_send = self.pendingMissions.pop(i)
+                        break
+                
+                if mission_to_send is None and self.pendingMissions:
+                    mission_to_send = self.pendingMissions.pop(0)
+                
+                if mission_to_send:
+                    try:
+                        success = self.sendMission(ip, idAgent, mission_to_send)
+                        if not success:
+                            self.pendingMissions.insert(0, mission_to_send)
+                    except Exception:
+                        self.pendingMissions.insert(0, mission_to_send)
+                else:
+                    self.missionLink.send(ip, self.missionLink.port, None, idAgent, "000", "no_mission")
+            else:
+                self.missionLink.send(ip, self.missionLink.port, None, idAgent, "000", "no_mission")
 
     def handleMissionProgress(self, idAgent, idMission, progress_json, ip):
         """
