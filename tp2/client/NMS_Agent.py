@@ -261,26 +261,18 @@ class NMS_Agent:
         Args:
             ip (str): Endereço IP da Nave-Mãe
         """
-        print(f"[DEBUG] register: Iniciando registo na Nave-Mãe {ip} (rover_id={self.id})")
-        print(f"[DEBUG] register: Enviando pedido de registo...")
         self.missionLink.send(ip,self.missionLink.port,self.missionLink.registerAgent,self.id,"000","\0")
-        print(f"[DEBUG] register: Aguardando confirmação de registo...")
         lista = self.missionLink.recv()
-        print(f"[DEBUG] register: Resposta recebida: idAgent={lista[0]}, ip={lista[4]}, message={lista[3]}")
         retries = 0
         max_retries = 10
         while (lista[0] != self.id or lista[4] != ip) and retries < max_retries:
             retries += 1
-            print(f"[DEBUG] register: Resposta inválida (esperado idAgent={self.id}, ip={ip}, recebido idAgent={lista[0]}, ip={lista[4]}). Retry {retries}/{max_retries}")
             self.missionLink.send(ip,self.missionLink.port,self.missionLink.registerAgent,self.id,"000","\0")
             lista = self.missionLink.recv()
-            print(f"[DEBUG] register: Nova resposta recebida: idAgent={lista[0]}, ip={lista[4]}, message={lista[3]}")
         
         if retries >= max_retries:
-            print(f"[DEBUG] register: Máximo de tentativas atingido")
             raise Exception(f"Máximo de tentativas ({max_retries}) atingido ao registar")
         
-        print(f"[DEBUG] register: Registo confirmado com sucesso")
         print(f"[INFO] Conectado à Nave-Mãe {ip}")
     
     def registerAgent(self, ip):
@@ -304,28 +296,20 @@ class NMS_Agent:
         Returns:
             dict or None: Dicionário com dados da missão recebida, ou None se não houver missão disponível
         """
-        print(f"[DEBUG] requestMission: Solicitando missão à Nave-Mãe {ip} (rover_id={self.id})")
         # Enviar solicitação de missão
         self.missionLink.send(ip, self.missionLink.port, self.missionLink.requestMission, self.id, "000", "request")
-        print(f"[DEBUG] requestMission: Solicitação enviada, aguardando resposta...")
         
         # Aguardar resposta (pode ser missão ou mensagem de "sem missão disponível")
         try:
             response = self.missionLink.recv()
-            print(f"[DEBUG] requestMission: Resposta recebida: idAgent={response[0]}, idMission={response[1]}, missionType={response[2]}, message={response[3][:50] if len(response[3]) > 50 else response[3]}..., ip={response[4]}")
-            # response tem: [idAgent, idMission, missionType, message, ip]
             if response[2] == self.missionLink.taskRequest:
-                # Bug fix: Missão já está na primeira resposta (response[3])
-                #          Não fazer recv() novamente - extrair e validar diretamente
                 mission_message = response[3]
-                mission_id = response[1]  # idMission do protocolo
+                mission_id = response[1]
                 
                 # Validar formato da missão
                 is_valid, error_msg = validateMission(mission_message)
                 
                 if not is_valid:
-                    print(f"Erro: Missão recebida é inválida: {error_msg}")
-                    # Enviar ACK mesmo assim para não bloquear o servidor
                     self.missionLink.send(response[4], self.missionLink.port, None, self.id, mission_id, "invalid")
                     return None
                 
@@ -335,40 +319,23 @@ class NMS_Agent:
                         mission_data = json.loads(mission_message)
                     else:
                         mission_data = mission_message
-                except json.JSONDecodeError as e:
-                    print(f"Erro: Não foi possível fazer parse do JSON da missão: {e}")
+                except json.JSONDecodeError:
                     self.missionLink.send(response[4], self.missionLink.port, None, self.id, mission_id, "parse_error")
                     return None
                 
-                # Verificar se o rover_id corresponde
-                if mission_data.get("rover_id") != self.id:
-                    print(f"Aviso: Missão {mission_id} destinada a outro rover ({mission_data.get('rover_id')})")
-                    # Continuar mesmo assim - pode ser útil para debug
-                
                 # Armazenar missão validada
                 self.tasks[mission_id] = mission_data
-                print(f"[DEBUG] requestMission: Missão {mission_id} armazenada em self.tasks")
                 
                 # Enviar ACK de confirmação
-                print(f"[DEBUG] requestMission: Enviando ACK de confirmação para missão {mission_id}")
                 self.missionLink.send(response[4], self.missionLink.port, None, self.id, mission_id, mission_id)
-                print(f"[OK] requestMission: Missão {mission_id} recebida e confirmada")
                 
                 return mission_data
             elif response[2] == self.missionLink.noneType:
-                # Bug fix: Quando servidor envia com missionType=None, é codificado como "N" no protocolo
-                #          O recv() extrai isto como a string "N", não Python None
-                #          Verificar response[2] == "N" em vez de response[2] is None
-                # Sem missão disponível (mensagem será "no_mission")
                 if response[3] == "no_mission":
                     print(f"[INFO] requestMission: Nave-Mãe respondeu: sem missão disponível no momento")
-                else:
-                    print(f"[DEBUG] requestMission: Resposta inesperada com missionType=None: {response[3]}")
                 return None
         except Exception as e:
             print(f"[ERRO] requestMission: Erro ao solicitar missão: {e}")
-            import traceback
-            traceback.print_exc()
             return None
 
     def recvMissionLink(self):
@@ -393,33 +360,26 @@ class NMS_Agent:
         Returns:
             dict or None: Dicionário com dados da missão validada, ou None se não for missão válida
         """
-        print(f"[DEBUG] recvMissionLink: Aguardando mensagem do MissionLink...")
         lista = self.missionLink.recv()
-        print(f"[DEBUG] recvMissionLink: Mensagem recebida: idAgent={lista[0]}, idMission={lista[1]}, missionType={lista[2]}, ip={lista[4]}")
         
         if lista[2] == self.missionLink.taskRequest:
             mission_message = lista[3]
             mission_id = lista[1]
-            print(f"[DEBUG] recvMissionLink: Recebida missão {mission_id}, validando formato...")
             
             # Validar formato da missão
             is_valid, error_msg = validateMission(mission_message)
             
             if not is_valid:
-                print(f"[DEBUG] recvMissionLink: Missão inválida: {error_msg}")
                 self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, "invalid")
                 return None
             
-            print(f"[DEBUG] recvMissionLink: Missão validada, fazendo parse do JSON...")
             # Parse do JSON da missão
             try:
                 if isinstance(mission_message, str):
                     mission_data = json.loads(mission_message)
                 else:
                     mission_data = mission_message
-                print(f"[DEBUG] recvMissionLink: JSON parseado com sucesso")
-            except json.JSONDecodeError as e:
-                print(f"[DEBUG] recvMissionLink: Erro ao fazer parse do JSON: {e}")
+            except json.JSONDecodeError:
                 self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, "parse_error")
                 return None
             
@@ -427,27 +387,22 @@ class NMS_Agent:
             self.tasks[mission_id] = mission_data
             
             # Enviar ACK de confirmação
-            print(f"[DEBUG] recvMissionLink: Enviando ACK de confirmação para {lista[4]}")
             self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, mission_id)
-            print(f"[DEBUG] recvMissionLink: ACK enviado")
             
             # Verificar se já há missão em execução
             if self.mission_executing:
                 self.mission_queue.append(mission_data)
-                print(f"[DEBUG] recvMissionLink: Missão adicionada à fila (missão atual em execução)")
                 print(f"[INFO] Missão {mission_id} adicionada à fila")
             else:
                 self.mission_executing = True
                 self.current_mission = mission_data
                 self.mission_telemetry_interval = mission_data.get("update_frequency_seconds", 30)
-                print(f"[DEBUG] recvMissionLink: Iniciando execução da missão em thread separada")
                 print(f"[INFO] Missão ID: {mission_id} recebida - iniciando execução")
                 mission_thread = threading.Thread(target=self.executeMission, args=(mission_data, self.serverAddress), daemon=True)
                 mission_thread.start()
             
             return mission_data
         
-        print(f"[DEBUG] recvMissionLink: Mensagem recebida não é uma missão (missionType={lista[2]})")
         return None
     
     def executeMission(self, mission_data, server_ip):
@@ -548,7 +503,6 @@ class NMS_Agent:
             self.updateTemperature(temperature)
             
             # Enviar telemetria com frequência da missão
-            # A telemetria contínua já envia posição e estado operacional, não é necessário reportar progresso separadamente
             self.createAndSendTelemetry(server_ip)
             
             # Aguardar até próxima atualização
@@ -585,64 +539,6 @@ class NMS_Agent:
                 print(f"[INFO] Iniciando próxima missão da fila: {next_mission.get('mission_id')}")
                 next_thread = threading.Thread(target=self.executeMission, args=(next_mission, server_ip), daemon=True)
                 next_thread.start()
-
-    def reportMissionProgress(self, ip, mission_id, progress_data):
-        """
-        Reporta o progresso de uma missão à Nave-Mãe.
-        Implementa o requisito: "O rover deve reportar o progresso da missão de acordo 
-        com parâmetros definidos na própria missão."
-        
-        Formato de progress_data:
-        {
-            "mission_id": string (obrigatório),
-            "progress_percent": integer (0-100, obrigatório),
-            "status": string (obrigatório: "in_progress"|"completed"|"failed"|"paused"),
-            "current_position": {"x": float, "y": float} (opcional),
-            "events": list (opcional, lista de eventos ocorridos),
-            "samples_collected": integer (opcional, para tarefas de coleta),
-            "images_captured": integer (opcional, para tarefas de captura),
-            "time_elapsed_minutes": float (opcional),
-            "estimated_completion_minutes": float (opcional)
-        }
-        
-        Args:
-            ip (str): Endereço IP da Nave-Mãe
-            mission_id (str): Identificador da missão
-            progress_data (dict): Dicionário com dados de progresso
-            
-        Returns:
-            bool: True se progresso foi reportado com sucesso, False caso contrário
-        """
-        # Validar campos obrigatórios
-        if "mission_id" not in progress_data:
-            progress_data["mission_id"] = mission_id
-        
-        if "progress_percent" not in progress_data:
-            print("Erro: progress_percent é obrigatório")
-            return False
-        
-        if "status" not in progress_data:
-            print("Erro: status é obrigatório")
-            return False
-        
-        # Converter para JSON
-        progress_json = json.dumps(progress_data)
-        
-        # Enviar reporte de progresso
-        try:
-            self.missionLink.send(ip, self.missionLink.port, self.missionLink.reportProgress, self.id, mission_id, progress_json)
-            
-            # Aguardar confirmação
-            response = self.missionLink.recv()
-            # Bug fix: Quando servidor envia com missionType=None, é codificado como "N" no protocolo
-            #          O recv() extrai isto como a string "N", não Python None
-            #          Verificar response[2] == "N" em vez de response[2] is None
-            if response[2] == self.missionLink.noneType and response[3] in ["progress_received", "Registered", "Already registered"]:
-                return True
-            return False
-        except Exception:
-            return False
-        
 
     def sendTelemetry(self,ip,message):
         """
@@ -887,25 +783,18 @@ class NMS_Agent:
             Conforme requisitos do PDF: "Os rovers devem reportar dados de monitorização 
             continuamente para garantir que estão a operar corretamente."
             """
-            print(f"[DEBUG] telemetry_loop: Iniciando loop de telemetria (intervalo={self.telemetry_interval}s)")
             time.sleep(self.telemetry_interval)  # Aguardar intervalo antes do primeiro envio
             while self.telemetry_running:
                 try:
                     filename = f"telemetry_{self.id}_{int(time.time())}.json"
-                    print(f"[DEBUG] telemetry_loop: Criando e enviando telemetria: {filename}")
                     success = self.createAndSendTelemetry(server_ip, None, filename)
                     
                     if success:
-                        print(f"[DEBUG] telemetry_loop: Telemetria enviada com sucesso")
                         print(f"[INFO] Telemetria enviada para {server_ip}")
-                    else:
-                        print(f"[DEBUG] telemetry_loop: Falha ao enviar telemetria")
                     
-                    print(f"[DEBUG] telemetry_loop: Aguardando {self.telemetry_interval}s até próximo envio...")
                     time.sleep(self.telemetry_interval)
                     
                 except Exception as e:
-                    print(f"[DEBUG] telemetry_loop: Erro no loop de telemetria: {e}")
                     # Continuar mesmo em caso de erro
                     time.sleep(self.telemetry_interval)
         

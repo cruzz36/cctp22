@@ -267,11 +267,9 @@ class MissionLink:
         seqinicial = 100
         retries = 0
         
-        print(f"[DEBUG] startConnection: Iniciando handshake com {destAddress}:{destPort} (idAgent={idAgent}, retryLimit={retryLimit})")
         while retries < retryLimit:
             try:
                 # Send SYN - no handshake, idMission contém o ID do rover
-                print(f"[DEBUG] startConnection: Enviando SYN para {destAddress}:{destPort} (tentativa {retries+1}/{retryLimit})")
                 self.sock.sendto(
                     f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
                     (destAddress, destPort)
@@ -279,14 +277,8 @@ class MissionLink:
                 try:
                     message, _ = self.sock.recvfrom(self.limit.buffersize)
                     lista = message.decode().split("|")
-                    # Bug fix: Verificar comprimento de lista antes de aceder a lista[flagPos]
-                    #          A validação de comprimento na linha 220 só acontece dentro do loop,
-                    #          mas o acesso inicial na linha 212 acontece antes do loop, causando IndexError
-                    #          se a primeira mensagem SYN-ACK recebida for malformada
                     if len(lista) < 7:
-                        # Mensagem malformada - reenviar SYN e continuar
                         retries += 1
-                        print(f"SYN-ACK malformado recebido. Retry: ({retries}/{retryLimit})")
                         continue
                     while lista[flagPos] != self.synackkey:
                         self.sock.sendto(
@@ -295,9 +287,7 @@ class MissionLink:
                         )
                         message,_ = self.sock.recvfrom(self.limit.buffersize)
                         lista = message.decode().split("|")
-                        # Validar formato da mensagem
                         if len(lista) < 7:
-                            # Mensagem malformada - reenviar SYN e continuar
                             self.sock.sendto(
                                 f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
                                 (destAddress, destPort)
@@ -305,36 +295,29 @@ class MissionLink:
                             continue
 
                 except socket.timeout:
-                    # Timeout ao aguardar SYN-ACK - incrementar retries e continuar para retry
                     retries += 1
-                    print(f"Timeout ao aguardar SYN-ACK de {destAddress}:{destPort}. Retry: ({retries}/{retryLimit})")
                     if retries >= retryLimit:
                         break
                     continue
-                except Exception as e:
+                except Exception:
                     retries += 1
-                    print(f"Erro ao aguardar SYN-ACK: {e}. Retry: ({retries}/{retryLimit})")
                     if retries >= retryLimit:
                         break
                     continue
 
                 # Send ACK
-                print(f"[DEBUG] startConnection: Recebido SYN-ACK de {destAddress}:{destPort}, enviando ACK")
                 self.sock.sendto(
                     f"{self.ackkey}|{idAgent}|{seqinicial}|{seqinicial}|_|0|-.-".encode(),
                     (destAddress, destPort)
                 )
-                print(f"[DEBUG] startConnection: Handshake concluído com sucesso")
                 return  (destAddress,destPort),idAgent,seqinicial + 1,seqinicial + 1 # Handshake successful
 
             
         
             except socket.timeout:
                 retries += 1
-                print(f"Retrying SYN: ({retries}/{retryLimit})")
-            except Exception as e:
+            except Exception:
                 retries += 1
-                print(f"Erro no handshake: {e}. Retrying... ({retries}/{retryLimit})")
         
         error_msg = f"Falha ao estabelecer conexão com {destAddress}:{destPort} após {retryLimit} tentativas"
         raise TimeoutError(error_msg)
@@ -357,54 +340,36 @@ class MissionLink:
                 - ack (int): Número de acknowledgment inicial (igual a seq)
         """
         # RECEBER O SYN
-        print(f"[DEBUG] acceptConnection: Aguardando SYN de rover...")
         message,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
-        print(f"[DEBUG] acceptConnection: Recebido pacote de {ip}:{port}")
         lista = message.decode().split("|")
-        # Bug fix: Validar comprimento de lista antes de aceder a lista[flagPos]
-        #          Se a mensagem for malformada (ex: apenas "S"), split retorna lista de 1 elemento
-        #          A condição do while será falsa e o código prossegue para linha 298 onde lista[1] é acedido,
-        #          causando IndexError. A validação na linha 294 só corre dentro do while loop.
         if len(lista) < 7:
-            # Mensagem malformada - continuar loop para receber próxima mensagem
-            lista = []  # Garantir que lista[flagPos] falhe na verificação
+            lista = []
         while len(lista) < 7 or lista[flagPos] != self.synkey:
             message,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
             lista = message.decode().split("|")
-            # Validar formato da mensagem
             if len(lista) < 7:
-                # Mensagem malformada - continuar loop
                 continue
         # No handshake, idMission contém o ID do rover
         idAgent = lista[idMissionPos]
-        print(f"[DEBUG] acceptConnection: SYN recebido de {ip}:{port} (idAgent={idAgent})")
         # ENVIAR SYNACK 
         lista[flagPos] = self.synackkey
         prevLista = lista.copy()
-        print(f"[DEBUG] acceptConnection: Enviando SYN-ACK para {ip}:{port}")
         self.sock.sendto("|".join(lista).encode(),(ip,port))
         # RECEBER ACK
         while True:
             try:
                 message,_ = self.sock.recvfrom(self.limit.buffersize)
                 lista = message.decode().split("|")
-                # Validar formato da mensagem
                 if len(lista) < 7:
-                    # Mensagem malformada - reenviar SYN-ACK e continuar
                     self.sock.sendto("|".join(prevLista).encode(),(ip,port))
                     continue
                 if (lista[flagPos] == self.ackkey and 
                 lista[idMissionPos] == idAgent and 
                 lista[ackPos] == lista[seqPos]):
-                    print(f"[DEBUG] acceptConnection: ACK recebido, conexão estabelecida")
                     return (ip,port),idAgent,int(lista[seqPos]),int(lista[ackPos])
             except socket.timeout:
-                # Reenviar SYN-ACK se timeout ao aguardar ACK
-                print(f"[DEBUG] acceptConnection: Timeout ao aguardar ACK de {ip}:{port}, reenviando SYN-ACK")
                 self.sock.sendto("|".join(prevLista).encode(),(ip,port))
-            except Exception as e:
-                print(f"Erro ao aguardar ACK no acceptConnection: {e}")
-                # Reenviar SYN-ACK
+            except Exception:
                 self.sock.sendto("|".join(prevLista).encode(),(ip,port))
 
         
@@ -431,9 +396,7 @@ class MissionLink:
         
         # The connection starts with an handshake to assure it has a somewhat reliable 
         # transfers between the client and the server 
-        print(f"[DEBUG] send: Iniciando conexão para enviar mensagem (ip={ip}, port={port}, idAgent={idAgent}, missionType={missionType}, idMission={idMission})")
         _,idAgent,seq,ack = self.startConnection(idAgent,ip,port)
-        print(f"[DEBUG] send: Conexão estabelecida, enviando dados (seq={seq}, ack={ack})")
 
         if message.endswith(".json"):
             # First cycle is to send the filename
@@ -667,12 +630,10 @@ class MissionLink:
         """
         message = ""
         # Establish connection, com timeout total de ~10s para não ficar infinito
-        print(f"[DEBUG] recv: Aguardando conexão de rover...")
         start_wait = time.time()
         while True:
             try:
                 (ipDest,portDest),idAgent,seq,ack = self.acceptConnection()
-                print(f"[DEBUG] recv: Conexão aceite de {ipDest}:{portDest} (idAgent={idAgent}, seq={seq}, ack={ack})")
                 break
             except socket.timeout:
                 if time.time() - start_wait >= 10:
