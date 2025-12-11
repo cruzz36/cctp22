@@ -55,7 +55,7 @@ def main():
                 if attempt < max_registration_retries:
                     time.sleep(2)
                 else:
-                    print(f"[ERRO] Falha ao registar após {max_registration_retries} tentativas")
+                    print(f"[ERRO] Falha ao registar após {max_registration_retries} tentativas: {e}")
                     import traceback
                     traceback.print_exc()
         

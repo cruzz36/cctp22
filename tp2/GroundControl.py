@@ -63,7 +63,11 @@ class GroundControl:
         """
         try:
             url = f"{self.api_url}{endpoint}"
-            response = requests.get(url, params=params, timeout=5)
+            # Adicionar timestamp para evitar cache
+            if params is None:
+                params = {}
+            params['_'] = int(time.time() * 1000)  # Timestamp em milissegundos
+            response = requests.get(url, params=params, timeout=5, headers={'Cache-Control': 'no-cache'})
             response.raise_for_status()
             return response.json()
         except requests.exceptions.ConnectionError as e:

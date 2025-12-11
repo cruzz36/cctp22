@@ -290,7 +290,12 @@ class ObservationAPI:
             
             telemetry_data = self._get_telemetry_data(limit, rover_filter)
             
-            return jsonify({"telemetry": telemetry_data}), 200
+            # Criar resposta sem cache
+            response = jsonify({"telemetry": telemetry_data})
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response, 200
         
         # Últimos dados de telemetria de um rover específico
         @self.app.route('/telemetry/<rover_id>', methods=['GET'])
@@ -592,24 +597,32 @@ class ObservationAPI:
                 try:
                     # Tentar converter para datetime para ordenação correta
                     if isinstance(timestamp, str):
-                        # Remover timezone se presente para simplificar
+                        # Remover timezone se presente
                         timestamp_clean = timestamp.replace('Z', '').replace('+00:00', '')
                         # Tentar parse ISO format
                         try:
-                            return datetime.fromisoformat(timestamp_clean)
+                            # ISO format pode ter microsegundos: YYYY-MM-DDTHH:MM:SS.ffffff
+                            if '.' in timestamp_clean:
+                                # Tem microsegundos
+                                parts = timestamp_clean.split('.')
+                                base = datetime.fromisoformat(parts[0])
+                                microseconds = int(parts[1][:6].ljust(6, '0')) if len(parts) > 1 else 0
+                                return base.replace(microsecond=microseconds)
+                            else:
+                                return datetime.fromisoformat(timestamp_clean)
                         except:
                             # Se falhar, tentar formatos alternativos
                             try:
                                 return datetime.strptime(timestamp_clean, "%Y-%m-%dT%H:%M:%S")
                             except:
-                                # Se tudo falhar, usar string para ordenação
+                                # Se tudo falhar, usar string para ordenação (ordenação lexicográfica funciona para ISO)
                                 return timestamp
                     return timestamp
                 except:
-                    # Se falhar, usar string para ordenação (ordenação lexicográfica)
+                    # Se falhar, usar string para ordenação
                     return timestamp
-            # Se não há timestamp, usar string vazia (fica no final)
-            return ""
+            # Se não há timestamp, usar datetime mínimo (fica no final)
+            return datetime.min
         
         # Ordenar por timestamp (mais recente primeiro)
         telemetry_data.sort(key=get_sort_key, reverse=True)
