@@ -406,7 +406,9 @@ class NMS_Server:
         if not mission_files:
             return
         
-        missions_loaded = 0
+        # Enviar apenas a primeira missão disponível para este rover
+        # As outras missões serão enviadas quando o rover solicitar ou quando a atual for concluída
+        first_mission_sent = False
         
         for mission_file in mission_files:
             try:
@@ -422,22 +424,27 @@ class NMS_Server:
                     if not is_valid:
                         continue
                     
-                    # Enviar missão para o rover
-                    rover_ip = self.agents.get(rover_id)
-                    if rover_ip:
-                        try:
-                            success = self.sendMission(rover_ip, rover_id, mission_data)
-                            if success:
-                                missions_loaded += 1
-                                print(f"[OK] Missão {mission_id} enviada para rover {rover_id}")
-                        except Exception as e:
-                            pass
+                    if not first_mission_sent:
+                        # Enviar apenas a primeira missão encontrada
+                        rover_ip = self.agents.get(rover_id)
+                        if rover_ip:
+                            try:
+                                success = self.sendMission(rover_ip, rover_id, mission_data)
+                                if success:
+                                    print(f"[OK] Missão {mission_id} enviada para rover {rover_id}")
+                                    first_mission_sent = True
+                                    continue  # Pular para próxima iteração
+                            except Exception:
+                                pass
+                    
+                    # Adicionar missões restantes à fila de pendentes
+                    if first_mission_sent:
+                        # Verificar se já foi enviada (está em self.tasks)
+                        if mission_id not in self.tasks:
+                            self.pendingMissions.append(mission_data)
                         
-            except Exception as e:
+            except Exception:
                 pass
-        
-        if missions_loaded > 0:
-            print(f"[INFO] {missions_loaded} missão(ões) atribuída(s) ao rover {rover_id}")
 
 
     def parseConfig(self,filename):

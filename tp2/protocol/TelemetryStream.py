@@ -65,6 +65,7 @@ class TelemetryStream:
             filename_str = filename.decode()
             
             # Tentar organizar por rover_id se o ficheiro contém telemetria JSON
+            rover_id = "unknown"
             try:
                 file_path = os.path.join(self.storefolder, filename_str)
                 if os.path.exists(file_path):
@@ -78,6 +79,8 @@ class TelemetryStream:
                             os.rename(file_path, new_path)
             except (json.JSONDecodeError, KeyError, OSError):
                 pass
+            
+            print(f"[OK] Telemetria recebida de {rover_id} ({ip}): {filename_str}")
             
         except Exception:
             pass
