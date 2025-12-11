@@ -441,14 +441,27 @@ class ObservationAPI:
         """
         Obtém a missão atual de um rover (a que está realmente em execução).
         
+        Como não há mais reporte de progresso via MissionLink, determina a missão atual
+        verificando se há missões ativas em tasks para o rover e se a telemetria indica
+        que está "em missão".
+        
         Args:
             rover_id (str): ID do rover
             
         Returns:
             str or None: ID da missão atual ou None se não houver
         """
-        # Primeiro, procurar missão com status "in_progress" (realmente em execução)
-        active_mission = None
+        # Verificar telemetria mais recente para confirmar se está em missão
+        latest_telemetry = self._get_latest_telemetry(rover_id)
+        operational_status = None
+        if latest_telemetry:
+            operational_status = latest_telemetry.get("operational_status", "")
+        
+        # Se não está "em missão" na telemetria, não há missão ativa
+        if operational_status != "em missão":
+            return None
+        
+        # Procurar missão ativa em tasks para este rover
         for mission_id, mission_data in self.nms_server.tasks.items():
             if isinstance(mission_data, str):
                 try:
@@ -457,18 +470,20 @@ class ObservationAPI:
                     continue
             
             if mission_data.get("rover_id") == rover_id:
-                # Verificar se há progresso com status "in_progress"
+                # Verificar se a missão não está concluída
+                # Se está em tasks e não está concluída em missionProgress, está ativa
                 if mission_id in self.nms_server.missionProgress:
                     progress = self.nms_server.missionProgress[mission_id]
                     if isinstance(progress, dict) and rover_id in progress:
                         rover_progress = progress[rover_id]
                         if isinstance(rover_progress, dict):
                             status = rover_progress.get("status", "")
-                            if status == "in_progress":
-                                return mission_id  # Esta é a missão em execução
+                            if status == "completed":
+                                continue  # Missão concluída, procurar próxima
+                
+                # Missão encontrada e ativa
+                return mission_id
         
-        # Se não encontrou missão "in_progress", retornar None
-        # (as outras missões do mesmo rover estão na fila e serão marcadas como "pending")
         return None
     
     def _get_mission_progress(self, rover_id: str, mission_id: Optional[str]) -> Optional[dict]:
