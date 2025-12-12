@@ -283,6 +283,10 @@ class MissionLink:
                         print(f"[DEBUG] startConnection: Pacote malformado (len={len(lista)}), ignorando")
                         retries += 1
                         continue
+                    # Verificar se o pacote veio do destino correto
+                    if recv_ip != destAddress or recv_port != destPort:
+                        print(f"[DEBUG] startConnection: Pacote de origem incorreta ({recv_ip}:{recv_port} != {destAddress}:{destPort}), ignorando")
+                        continue  # Continuar a aguardar sem incrementar retries
                     print(f"[DEBUG] startConnection: Flag recebido: {lista[flagPos]}, esperado: {self.synackkey}")
                     while lista[flagPos] != self.synackkey:
                         print(f"[DEBUG] startConnection: Flag incorreto ({lista[flagPos]} != {self.synackkey}), reenviando SYN")
@@ -300,6 +304,10 @@ class MissionLink:
                                 (destAddress, destPort)
                             )
                             continue
+                        # Verificar se o pacote veio do destino correto
+                        if recv_ip != destAddress or recv_port != destPort:
+                            print(f"[DEBUG] startConnection: Pacote de origem incorreta ({recv_ip}:{recv_port} != {destAddress}:{destPort}), ignorando")
+                            continue  # Continuar a aguardar sem reenviar SYN
 
                 except socket.timeout:
                     print(f"[DEBUG] startConnection: Timeout ao aguardar SYN-ACK (tentativa {retries + 1}/{retryLimit})")
@@ -355,18 +363,18 @@ class MissionLink:
         """
         print("[DEBUG] acceptConnection: Aguardando SYN...")
         # RECEBER O SYN
-        message,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
-        print(f"[DEBUG] acceptConnection: Recebido pacote de {ip}:{port}")
-        lista = message.decode().split("|")
-        if len(lista) < 7:
-            print(f"[DEBUG] acceptConnection: Pacote malformado (len={len(lista)})")
-            lista = []
-        while len(lista) < 7 or lista[flagPos] != self.synkey:
-            print(f"[DEBUG] acceptConnection: Flag={lista[flagPos] if len(lista) >= 7 else 'N/A'}, esperado={self.synkey}, aguardando SYN válido...")
+        while True:
             message,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
             print(f"[DEBUG] acceptConnection: Recebido pacote de {ip}:{port}")
             lista = message.decode().split("|")
             if len(lista) < 7:
+                print(f"[DEBUG] acceptConnection: Pacote malformado (len={len(lista)}), ignorando")
+                continue
+            if lista[flagPos] == self.synkey:
+                print(f"[DEBUG] acceptConnection: SYN válido recebido de {ip}:{port}")
+                break
+            else:
+                print(f"[DEBUG] acceptConnection: Flag={lista[flagPos]}, esperado={self.synkey}, ignorando pacote (pode ser de outro protocolo)")
                 continue
         # No handshake, idMission contém o ID do rover
         idAgent = lista[idMissionPos]
@@ -379,7 +387,11 @@ class MissionLink:
         # RECEBER ACK
         while True:
             try:
-                message,_ = self.sock.recvfrom(self.limit.buffersize)
+                message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
+                # Verificar se o pacote veio do cliente correto
+                if recv_ip != ip or recv_port != port:
+                    print(f"[DEBUG] acceptConnection: Pacote de origem incorreta ({recv_ip}:{recv_port} != {ip}:{port}), ignorando")
+                    continue
                 lista = message.decode().split("|")
                 if len(lista) < 7:
                     print(f"[DEBUG] acceptConnection: ACK malformado, reenviando SYN-ACK")
@@ -392,7 +404,7 @@ class MissionLink:
                     print(f"[DEBUG] acceptConnection: ACK válido recebido, handshake concluído")
                     return (ip,port),idAgent,int(lista[seqPos]),int(lista[ackPos])
                 else:
-                    print(f"[DEBUG] acceptConnection: ACK inválido, reenviando SYN-ACK")
+                    print(f"[DEBUG] acceptConnection: ACK inválido (flag={lista[flagPos]}, esperado={self.ackkey}), reenviando SYN-ACK")
                     self.sock.sendto("|".join(prevLista).encode(),(ip,port))
             except socket.timeout:
                 print(f"[DEBUG] acceptConnection: Timeout ao aguardar ACK, reenviando SYN-ACK")
