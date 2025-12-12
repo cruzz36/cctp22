@@ -279,9 +279,17 @@ class MissionLink:
                 )
                 try:
                     print(f"[DEBUG] startConnection: Aguardando SYN-ACK de {destAddress}:{destPort}...")
+                    # Aguardar um pouco antes de receber para dar tempo ao servidor enviar SYN-ACK
+                    time.sleep(0.2)
                     # Usar lock para evitar que acceptConnection() consuma o SYN-ACK
                     with self.sock_lock:
-                        message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
+                        # Timeout curto para não bloquear muito tempo
+                        original_timeout_inner = self.sock.gettimeout()
+                        self.sock.settimeout(2.0)  # Timeout de 2s para receber SYN-ACK
+                        try:
+                            message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
+                        finally:
+                            self.sock.settimeout(original_timeout_inner)
                     print(f"[DEBUG] startConnection: Recebido pacote de {recv_ip}:{recv_port}")
                     lista = message.decode().split("|")
                     if len(lista) < 7:
@@ -375,47 +383,50 @@ class MissionLink:
         """
         print("[DEBUG] acceptConnection: Aguardando SYN...")
         # RECEBER O SYN
-        # NOTA: Usar lock para evitar race conditions com startConnection()
-        #       Mas usar timeout curto para não bloquear startConnection() por muito tempo
-        with self.sock_lock:
-            # Timeout curto para dar oportunidade ao startConnection() de receber SYN-ACK
-            original_timeout = self.sock.gettimeout()
-            self.sock.settimeout(0.5)  # Timeout curto de 0.5s
-            
-            while True:
-                try:
+        # NOTA: Usar lock APENAS durante recvfrom() para evitar race conditions
+        #       Mas libertar lock imediatamente após receber pacote para dar oportunidade ao startConnection()
+        original_timeout = self.sock.gettimeout()
+        self.sock.settimeout(1.0)  # Timeout de 1s para dar mais oportunidades ao startConnection()
+        
+        while True:
+            try:
+                # Usar lock APENAS durante recvfrom(), não durante todo o processamento
+                with self.sock_lock:
                     message,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
-                    print(f"[DEBUG] acceptConnection: Recebido pacote de {ip}:{port}")
-                    lista = message.decode().split("|")
-                    if len(lista) < 7:
-                        print(f"[DEBUG] acceptConnection: Pacote malformado (len={len(lista)}), ignorando")
-                        continue
-                    flag = lista[flagPos]
-                    if flag == self.synkey:
-                        print(f"[DEBUG] acceptConnection: SYN válido recebido de {ip}:{port}")
-                        # Restaurar timeout original antes de sair
-                        self.sock.settimeout(original_timeout)
-                        break
-                    elif flag == self.synackkey:
-                        # SYN-ACK é para startConnection(), não para acceptConnection()
-                        # PROBLEMA: Já consumimos o pacote
-                        # SOLUÇÃO: Reenviar SYN-ACK de volta (mas não sabemos para onde)
-                        #          Ou simplesmente ignorar e deixar startConnection() fazer retry
-                        print(f"[DEBUG] acceptConnection: SYN-ACK recebido (flag={flag}), ignorando (é para startConnection())")
-                        continue
-                    else:
-                        print(f"[DEBUG] acceptConnection: Flag={flag}, esperado={self.synkey}, ignorando pacote")
-                        continue
-                except socket.timeout:
-                    # Timeout é normal - restaurar timeout e sair do lock para dar oportunidade ao startConnection()
-                    print(f"[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal), libertando lock")
-                    self.sock.settimeout(original_timeout)
-                    # Não fazer break aqui - continuar a tentar mas libertar lock periodicamente
-                    time.sleep(0.1)  # Pequeno delay antes de tentar novamente
+                # Lock libertado aqui - startConnection() pode agora receber pacotes
+                
+                print(f"[DEBUG] acceptConnection: Recebido pacote de {ip}:{port}")
+                lista = message.decode().split("|")
+                if len(lista) < 7:
+                    print(f"[DEBUG] acceptConnection: Pacote malformado (len={len(lista)}), ignorando")
                     continue
-            
-            # Restaurar timeout original
-            self.sock.settimeout(original_timeout)
+                flag = lista[flagPos]
+                if flag == self.synkey:
+                    print(f"[DEBUG] acceptConnection: SYN válido recebido de {ip}:{port}")
+                    # Restaurar timeout original antes de continuar
+                    self.sock.settimeout(original_timeout)
+                    break
+                elif flag == self.synackkey:
+                    # SYN-ACK é para startConnection(), não para acceptConnection()
+                    # PROBLEMA: Já consumimos o pacote, então startConnection() não o receberá
+                    # SOLUÇÃO: Delay maior para dar tempo ao servidor reenviar SYN-ACK e startConnection() recebê-lo
+                    print(f"[DEBUG] acceptConnection: SYN-ACK recebido (flag={flag}), ignorando (é para startConnection())")
+                    # Delay maior para dar tempo ao startConnection() de receber o próximo SYN-ACK do servidor
+                    # O servidor reenvia SYN-ACK periodicamente, então startConnection() terá oportunidade
+                    time.sleep(1.0)  # Delay maior para dar mais tempo ao startConnection()
+                    continue
+                else:
+                    print(f"[DEBUG] acceptConnection: Flag={flag}, esperado={self.synkey}, ignorando pacote")
+                    continue
+            except socket.timeout:
+                # Timeout é normal - lock já foi libertado, então startConnection() pode receber SYN-ACK
+                print(f"[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)")
+                # Pequeno delay antes de tentar novamente
+                time.sleep(0.1)
+                continue
+        
+        # Restaurar timeout original
+        self.sock.settimeout(original_timeout)
         # No handshake, idMission contém o ID do rover
         idAgent = lista[idMissionPos]
         print(f"[DEBUG] acceptConnection: SYN recebido de {ip}:{port} (idAgent={idAgent}), enviando SYN-ACK")
