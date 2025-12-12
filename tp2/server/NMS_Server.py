@@ -1,6 +1,7 @@
 import socket
 from protocol import MissionLink,TelemetryStream
 import threading
+import time
 from otherEntities import Limit
 import os
 import json
@@ -307,31 +308,35 @@ class NMS_Server:
             mission_id = mission_dict["mission_id"]
         
         # Enviar missão via MissionLink
-        self.missionLink.send(ip, self.missionLink.port, self.missionLink.taskRequest, idAgent, mission_id, mission_json)
-        
-        # Aguardar confirmação
-        lista = self.missionLink.recv()
+        # O método send() já aguarda confirmação internamente e retorna True se bem-sucedido
+        # Não devemos chamar recv() aqui porque estabeleceria uma nova conexão e poderia receber outras mensagens
         retries = 0
         max_retries = 5
         
         while retries < max_retries:
-            if (
-                lista[0] == idAgent and
-                lista[2] == self.missionLink.noneType and
-                lista[4] == ip
-            ):
-                # Confirmação recebida
-                if isinstance(mission_data, dict):
-                    self.tasks[mission_id] = mission_data
+            try:
+                success = self.missionLink.send(ip, self.missionLink.port, self.missionLink.taskRequest, idAgent, mission_id, mission_json)
+                if success:
+                    # Missão enviada com sucesso - armazenar em tasks
+                    if isinstance(mission_data, dict):
+                        self.tasks[mission_id] = mission_data
+                    else:
+                        self.tasks[mission_id] = mission_json
+                    print(f"[INFO] Missão {mission_id} enviada e confirmada por rover {idAgent}")
+                    return True
                 else:
-                    self.tasks[mission_id] = mission_json
-                print(f"[INFO] Missão {mission_id} enviada e confirmada por rover {idAgent}")
-                return True
-            
-            # Retransmitir
-            retries += 1
-            self.missionLink.send(ip, self.missionLink.port, self.missionLink.taskRequest, idAgent, mission_id, mission_json)
-            lista = self.missionLink.recv()
+                    # send() retornou False - tentar novamente
+                    retries += 1
+                    if retries < max_retries:
+                        print(f"[INFO] Tentativa {retries}/{max_retries} de envio de missão {mission_id} falhou, a tentar novamente...")
+                        time.sleep(0.5)  # Pequeno delay antes de retransmitir
+            except Exception as e:
+                retries += 1
+                if retries < max_retries:
+                    print(f"[INFO] Erro ao enviar missão {mission_id} (tentativa {retries}/{max_retries}): {e}")
+                    time.sleep(0.5)
+                else:
+                    print(f"[ERRO] Missão {mission_id} não confirmada por rover {idAgent} após {max_retries} tentativas: {e}")
         
         print(f"[ERRO] Missão {mission_id} não confirmada por rover {idAgent} após {max_retries} tentativas")
         return False
@@ -406,9 +411,12 @@ class NMS_Server:
                     if not is_valid:
                         continue
                     
-                    # Verificar se já foi enviada (está em self.tasks)
+                    # Verificar se já foi enviada e ainda está ativa (está em self.tasks)
+                    # NOTA: Se uma missão foi concluída e removida de tasks pela API,
+                    #       ela pode ser recarregada se necessário (ex: se o rover solicitar novamente)
+                    #       Mas se ainda está em tasks, significa que está ativa ou pendente, então não recarregar
                     if mission_id in self.tasks:
-                        continue  # Missão já enviada, pular
+                        continue  # Missão já enviada e ainda ativa/pendente, pular
                     
                     # Verificar se já está na fila para evitar duplicados
                     already_in_queue = False
