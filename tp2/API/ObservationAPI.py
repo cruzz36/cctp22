@@ -628,8 +628,8 @@ class ObservationAPI:
         Returns:
             list: Lista de dados de telemetria
         """
-        # Limpar ficheiros antigos periodicamente (manter apenas os 50 mais recentes por rover)
-        self._cleanup_old_telemetry_files(max_files_per_rover=50)
+        # Limpar ficheiros antigos periodicamente (manter até 600 ficheiros por rover)
+        self._cleanup_old_telemetry_files(max_files_per_rover=600)
         
         telemetry_folder = self.nms_server.telemetryStream.storefolder
         telemetry_data = []
@@ -804,7 +804,7 @@ class ObservationAPI:
         # Retornar apenas os N mais recentes
         return telemetry_data[:limit]
     
-    def _cleanup_old_telemetry_files(self, max_files_per_rover=50):
+    def _cleanup_old_telemetry_files(self, max_files_per_rover=600):
         """
         Remove ficheiros de telemetria antigos, mantendo apenas os N mais recentes por rover.
         Evita acumulação excessiva de ficheiros.
