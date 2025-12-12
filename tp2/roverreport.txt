@@ -164,3 +164,4 @@ Monitorização contínua de telemetria parada
 Rover r1 encerrado.
 root@Rover1:/tmp/nms# ^C
 root@Rover1:/tmp/nms# 
+ 
