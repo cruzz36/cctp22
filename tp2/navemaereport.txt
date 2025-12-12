@@ -1,5 +1,5 @@
-root@NaveMae:/tmp/pycore.42909/NaveMae.conf# cd /tmp/nms                    
-root@NaveMae:/tmp/nms# python3 start_nms.py           
+root@NaveMae:/tmp/pycore.42909/NaveMae.conf# cd /tmp/nms         
+root@NaveMae:/tmp/nms# python3 start_nms.py
 ============================================================
 NAVE-MÃE - Iniciando...
 ============================================================
@@ -27,8 +27,6 @@ Nave-Mãe pronta e a escutar!
 Aguardando conexões de rovers...
 Pressione Ctrl+C para encerrar
 
-[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
-[DEBUG] acceptConnection: Flag recebida: S
 [DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080, idAgent=r1
 [DEBUG] acceptConnection: SYN válido processado
 [DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.3.10:8080, idAgent=r1
@@ -74,19 +72,13 @@ Pressione Ctrl+C para encerrar
 [DEBUG] send: Enviando mensagem completa (seq=101)
 [DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
 [DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
-[PACKET LOSS] Timeout ao aguardar FIN/ACK de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando FIN para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar FIN/ACK de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando FIN para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar FIN/ACK de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando FIN para 10.0.3.10:8080
 [DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
 [DEBUG] send: Aguardando ACK do FIN enviado anteriormente...
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566296_500849.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566965_969985.json
 [PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/5)
 [RETRANSMISSÃO] Reenviando FIN para 10.0.3.10:8080
-[DEBUG] send: ACK do FIN recebido, conexão fechada com sucesso
+[DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
 [DEBUG] sendMission: Iniciando envio de missão M-001 para rover r1 (10.0.3.10:8080)
 [DEBUG] sendMission: Tamanho da mensagem JSON: 159 bytes
 [DEBUG] sendMission: Tentativa 1/5 - chamando missionLink.send()
@@ -105,18 +97,18 @@ Pressione Ctrl+C para encerrar
 [DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
 [DEBUG] send: Aguardando ACK do FIN enviado anteriormente...
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566301_508160.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566970_977081.json
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566975_984426.json
 [PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/5)
 [RETRANSMISSÃO] Reenviando FIN para 10.0.3.10:8080
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566306_513598.json
 [DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
 [DEBUG] sendMission: missionLink.send() retornou: True
 [INFO] Missão M-001 enviada e confirmada por rover r1
 [DEBUG] recv: Iniciando receção - aguardando handshake
 [DEBUG] acceptConnection: Aguardando SYN...
-[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
-[DEBUG] acceptConnection: Flag recebida: S
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566980_990718.json
 [DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080, idAgent=r1
 [DEBUG] acceptConnection: SYN válido processado
 [DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.3.10:8080, idAgent=r1
@@ -145,43 +137,35 @@ Pressione Ctrl+C para encerrar
 [DEBUG] recv: Iniciando receção - aguardando handshake
 [DEBUG] acceptConnection: Aguardando SYN...
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566311_520108.json
-[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
-[DEBUG] acceptConnection: Flag recebida: F
-[DEBUG] acceptConnection: FIN recebido de 10.0.3.10:8080 (pode ser de conexão anterior), respondendo com ACK
-[DEBUG] acceptConnection: ACK do FIN enviado para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566985_997285.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566316_524481.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566991_000293.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566321_531167.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566996_007440.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566326_533864.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567001_015534.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566331_538806.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567006_021281.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566336_540908.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567011_026647.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566341_547233.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567016_031826.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566346_552189.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567021_036135.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566351_566074.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567026_042902.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566356_578318.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567031_050546.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566361_582589.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567036_055999.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566366_586328.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567041_058743.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566371_591403.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567046_060747.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566376_598517.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567051_067644.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566381_602379.json
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566383_737893.json
-[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
-[DEBUG] acceptConnection: Flag recebida: S
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567051_657553.json
 [DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080, idAgent=r1
 [DEBUG] acceptConnection: SYN válido processado
 [DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.3.10:8080, idAgent=r1
@@ -200,7 +184,15 @@ Pressione Ctrl+C para encerrar
 [DEBUG] recv: É uma mensagem, tamanho=125 bytes
 [DEBUG] recv: ACK da primeira mensagem enviado
 [DEBUG] recv: Aguardando chunks adicionais ou FIN...
-[DEBUG] recv: Chunk 1 recebido de 10.0.3.10:8080, tamanho=21 bytes
+[DEBUG] recv: Chunk 1 recebido de 10.0.3.10:8080, tamanho=147 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 2 recebido de 10.0.3.10:8080, tamanho=147 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 3 recebido de 10.0.3.10:8080, tamanho=147 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 4 recebido de 10.0.3.10:8080, tamanho=147 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 5 recebido de 10.0.3.10:8080, tamanho=21 bytes
 [DEBUG] recv: Chunk parseado - flag=F, seq=102, esperado seq=102
 [DEBUG] recv: Chunk válido recebido (seq=102, tamanho mensagem=1 bytes)
 [DEBUG] recv: FIN recebido! Mensagem completa tem 125 bytes
@@ -214,35 +206,101 @@ Pressione Ctrl+C para encerrar
 [DEBUG] startConnection: Iniciando handshake com 10.0.3.10:8080, idAgent=r1, retryLimit=5
 [DEBUG] startConnection: Enviando SYN (tentativa 1/5)
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566386_607817.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567056_074958.json
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566391_609797.json
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 4/5)
 [RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567061_077743.json
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
 [DEBUG] startConnection: Enviando SYN (tentativa 2/5)
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566396_616061.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567066_081589.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 3/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567071_089520.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567076_095905.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 4/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 1/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567081_103849.json
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 4/5)
 [RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567086_110897.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 5/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 1/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567091_118538.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
+[DEBUG] send: Iniciando envio - missionType=None, idAgent=r1, idMission=M-001, tamanho=5 bytes, destino=10.0.3.10:8080
+[DEBUG] send: Iniciando handshake com 10.0.3.10:8080
+[DEBUG] startConnection: Iniciando handshake com 10.0.3.10:8080, idAgent=r1, retryLimit=5
+[DEBUG] startConnection: Enviando SYN (tentativa 1/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567096_125747.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 1/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567101_129762.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567106_137506.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 2/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567111_144724.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
 [DEBUG] startConnection: Enviando SYN (tentativa 3/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567116_151133.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567121_154860.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 4/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 1/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567126_157269.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 3/5)
+[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567131_165437.json
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 5/5)
 [DEBUG] startConnection: SYN-ACK recebido de 10.0.3.10:8080
 [DEBUG] startConnection: Enviando ACK para completar handshake
 [DEBUG] startConnection: Handshake concluído com sucesso - seq=101
 [DEBUG] send: Handshake concluído - seq=101, ack=101
-[DEBUG] send: Mensagem cabe num único pacote (17 bytes)
+[DEBUG] send: Mensagem cabe num único pacote (5 bytes)
 [DEBUG] send: Enviando mensagem completa (seq=101)
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566401_620539.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
 [PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
 [RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566406_626215.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567136_172430.json
 [PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
 [RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
 [PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
@@ -250,146 +308,141 @@ Pressione Ctrl+C para encerrar
 [PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
 [RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566411_632485.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567141_179281.json
 [PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
 [RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
 [PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
 [RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566416_638376.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567146_184412.json
 [PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
 [RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
+[DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
+[DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
+[DEBUG] send: Aguardando ACK do FIN enviado anteriormente...
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566421_643362.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567151_190184.json
+[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/5)
+[RETRANSMISSÃO] Reenviando FIN para 10.0.3.10:8080
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566426_650542.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567156_194327.json
+[DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
+[DEBUG] recv: Iniciando receção - aguardando handshake
+[DEBUG] acceptConnection: Aguardando SYN...
+[DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN válido processado
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.3.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK
+[PACKET LOSS] Timeout ao aguardar ACK do handshake de 10.0.3.10:8080 (tentativa 1/5)
+[RETRANSMISSÃO] Reenviando SYN-ACK para 10.0.3.10:8080
+[DEBUG] acceptConnection: ACK recebido, handshake concluído - seq=100, ack=100
+[DEBUG] recv: Handshake concluído - idAgent=r1, seq=100, ack=100, origem=10.0.3.10:8080
+[DEBUG] recv: Aguardando primeira mensagem...
+[DEBUG] recv: Primeira mensagem recebida de 10.0.3.10:8080, tamanho=25 bytes
+[DEBUG] recv: Mensagem parseada - flag=D, idMission=000, seq=101, missionType=Q
+[DEBUG] recv: Validando primeira mensagem - IP esperado=10.0.3.10, recebido=10.0.3.10, Porta esperada=8080, recebida=8080, Seq esperado=101, recebido=101
+[DEBUG] recv: Validação passou!
+[DEBUG] recv: idMission extraído: 000
+[DEBUG] recv: Primeira mensagem válida - missionType=Q, idMission=000, seq=101
+[DEBUG] recv: É uma mensagem, tamanho=7 bytes
+[DEBUG] recv: ACK da primeira mensagem enviado
+[DEBUG] recv: Aguardando chunks adicionais ou FIN...
+[DEBUG] recv: Chunk 1 recebido de 10.0.3.10:8080, tamanho=25 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 2 recebido de 10.0.3.10:8080, tamanho=25 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 3 recebido de 10.0.3.10:8080, tamanho=25 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 4 recebido de 10.0.3.10:8080, tamanho=25 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 5 recebido de 10.0.3.10:8080, tamanho=25 bytes
+[DEBUG] recv: Chunk parseado - flag=D, seq=101, esperado seq=102
+[DEBUG] recv: Chunk 6 recebido de 10.0.3.10:8080, tamanho=19 bytes
+[DEBUG] recv: Chunk parseado - flag=F, seq=102, esperado seq=102
+[DEBUG] recv: Chunk válido recebido (seq=102, tamanho mensagem=1 bytes)
+[DEBUG] recv: FIN recebido! Mensagem completa tem 7 bytes
+[DEBUG] recv: Último chunk adicionado (tamanho final: 8 bytes)
+[DEBUG] recv: Enviando ACK do FIN recebido (seq=102, ack=102)
+[DEBUG] recv: Enviando nosso próprio FIN (seq=103)
+[DEBUG] recv: Aguardando ACK do nosso FIN enviado
+[DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 7 bytes)
+[DEBUG] sendMission: Iniciando envio de missão M-004 para rover r1 (10.0.3.10:8080)
+[DEBUG] sendMission: Tamanho da mensagem JSON: 165 bytes
+[DEBUG] sendMission: Tentativa 1/5 - chamando missionLink.send()
+[DEBUG] send: Iniciando envio - missionType=T, idAgent=r1, idMission=M-004, tamanho=165 bytes, destino=10.0.3.10:8080
+[DEBUG] send: Iniciando handshake com 10.0.3.10:8080
+[DEBUG] startConnection: Iniciando handshake com 10.0.3.10:8080, idAgent=r1, retryLimit=5
+[DEBUG] startConnection: Enviando SYN (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.3.10:8080 (tentativa 2/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.3.10:8080
+[DEBUG] startConnection: SYN-ACK recebido de 10.0.3.10:8080
+[DEBUG] startConnection: Enviando ACK para completar handshake
+[DEBUG] startConnection: Handshake concluído com sucesso - seq=101
+[DEBUG] send: Handshake concluído - seq=101, ack=101
+[DEBUG] send: Mensagem cabe num único pacote (165 bytes)
+[DEBUG] send: Enviando mensagem completa (seq=101)
+[DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
+[DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
+[DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
+[DEBUG] send: Aguardando ACK do FIN enviado anteriormente...
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566431_653554.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567161_196082.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566436_660580.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567166_201885.json
+[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/5)
+[RETRANSMISSÃO] Reenviando FIN para 10.0.3.10:8080
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566441_666668.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567171_205201.json
+[DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
+[DEBUG] sendMission: missionLink.send() retornou: True
+[INFO] Missão M-004 enviada e confirmada por rover r1
+[DEBUG] recv: Iniciando receção - aguardando handshake
+[DEBUG] acceptConnection: Aguardando SYN...
+[DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN válido processado
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.3.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK
+[DEBUG] acceptConnection: ACK recebido, handshake concluído - seq=100, ack=100
+[DEBUG] recv: Handshake concluído - idAgent=r1, seq=100, ack=100, origem=10.0.3.10:8080
+[DEBUG] recv: Aguardando primeira mensagem...
+[DEBUG] recv: Primeira mensagem recebida de 10.0.3.10:8080, tamanho=25 bytes
+[DEBUG] recv: Mensagem parseada - flag=D, idMission=M-004, seq=101, missionType=N
+[DEBUG] recv: Validando primeira mensagem - IP esperado=10.0.3.10, recebido=10.0.3.10, Porta esperada=8080, recebida=8080, Seq esperado=101, recebido=101
+[DEBUG] recv: Validação passou!
+[DEBUG] recv: idMission extraído: M-004
+[DEBUG] recv: Primeira mensagem válida - missionType=N, idMission=M-004, seq=101
+[DEBUG] recv: É uma mensagem, tamanho=5 bytes
+[DEBUG] recv: ACK da primeira mensagem enviado
+[DEBUG] recv: Aguardando chunks adicionais ou FIN...
+[DEBUG] recv: Chunk 1 recebido de 10.0.3.10:8080, tamanho=21 bytes
+[DEBUG] recv: Chunk parseado - flag=F, seq=102, esperado seq=102
+[DEBUG] recv: Chunk válido recebido (seq=102, tamanho mensagem=1 bytes)
+[DEBUG] recv: FIN recebido! Mensagem completa tem 5 bytes
+[DEBUG] recv: Último chunk adicionado (tamanho final: 6 bytes)
+[DEBUG] recv: Enviando ACK do FIN recebido (seq=102, ack=102)
+[DEBUG] recv: Enviando nosso próprio FIN (seq=103)
+[DEBUG] recv: Aguardando ACK do nosso FIN enviado
+[DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 5 bytes)
+[DEBUG] recv: Iniciando receção - aguardando handshake
+[DEBUG] acceptConnection: Aguardando SYN...
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566446_672545.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567176_210763.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566451_674967.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567181_215644.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566456_676814.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567186_217476.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566461_681028.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567191_222816.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566466_685600.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567196_226108.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566471_688402.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567201_232912.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566476_692769.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566481_699484.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566486_706917.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566491_713003.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566496_714544.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566501_716676.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765566506_723096.json
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765567206_238290.json
 ^C
 
 A encerrar Nave-Mãe...
 Aguardando threads terminarem...
-[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.3.10:8080
-[RETRANSMISSÃO] Reenviando mensagem para 10.0.3.10:8080
 Nave-Mãe encerrada.
 root@NaveMae:/tmp/nms# 

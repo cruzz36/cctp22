@@ -1,4 +1,4 @@
-root@Rover1:/tmp/pycore.42909/Rover1.conf# cd /tmp/nms                    
+root@Rover1:/tmp/pycore.42909/Rover1.conf# cd /tmp/nms         
 root@Rover1:/tmp/nms# python3 start_rover.py 10.0.1.10 r1
 ============================================================
 ROVER r1 - Iniciando...
@@ -24,8 +24,6 @@ Intervalo de telemetria: 5 segundos
 [DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
 [DEBUG] recv: Iniciando receção - aguardando handshake
 [DEBUG] acceptConnection: Aguardando SYN...
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: S
 [DEBUG] acceptConnection: SYN recebido de 10.0.1.10:8080, idAgent=r1
 [DEBUG] acceptConnection: SYN válido processado
 [DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.1.10:8080, idAgent=r1
@@ -50,8 +48,6 @@ Intervalo de telemetria: 5 segundos
 [DEBUG] recv: Enviando ACK do FIN recebido (seq=102, ack=102)
 [DEBUG] recv: Enviando nosso próprio FIN (seq=103)
 [DEBUG] recv: Aguardando ACK do nosso FIN enviado
-[PACKET LOSS] Timeout ao aguardar ACK do nosso FIN de 10.0.1.10:8080 (recv) (tentativa 3/5)
-[RETRANSMISSÃO] Reenviando nosso FIN para 10.0.1.10:8080
 [DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 10 bytes)
 [INFO] Rover r1 conectado à Nave-Mãe 10.0.1.10
 [OK] Registado como r1 na Nave-Mãe 10.0.1.10
@@ -67,12 +63,6 @@ Rover em operação. Aguardando missões...
 Pressione Ctrl+C para encerrar
 
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: F
-[DEBUG] acceptConnection: FIN recebido de 10.0.1.10:8080 (pode ser de conexão anterior), respondendo com ACK
-[DEBUG] acceptConnection: ACK do FIN enviado para 10.0.1.10:8080
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: S
 [DEBUG] acceptConnection: SYN recebido de 10.0.1.10:8080, idAgent=r1
 [DEBUG] acceptConnection: SYN válido processado
 [DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.1.10:8080, idAgent=r1
@@ -97,11 +87,7 @@ Pressione Ctrl+C para encerrar
 [DEBUG] recv: Enviando ACK do FIN recebido (seq=102, ack=102)
 [DEBUG] recv: Enviando nosso próprio FIN (seq=103)
 [DEBUG] recv: Aguardando ACK do nosso FIN enviado
-[INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do nosso FIN de 10.0.1.10:8080 (recv) (tentativa 3/5)
-[RETRANSMISSÃO] Reenviando nosso FIN para 10.0.1.10:8080
-[INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] recv: Não recebeu ACK do nosso FIN após 5 tentativas, mas já enviou ACK do FIN recebido - retornando mensagem
+[DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 159 bytes)
 [DEBUG] recvMissionLink: Mensagem recebida - missionType=T, idMission=M-001, idAgent=r1
 [DEBUG] recvMissionLink: É uma missão (taskRequest), processando...
 [DEBUG] recvMissionLink: Validando missão M-001...
@@ -114,6 +100,16 @@ Pressione Ctrl+C para encerrar
 [DEBUG] send: Iniciando handshake com 10.0.1.10:8080
 [DEBUG] startConnection: Iniciando handshake com 10.0.1.10:8080, idAgent=r1, retryLimit=5
 [DEBUG] startConnection: Enviando SYN (tentativa 1/5)
+[INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 2/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
+[INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
+[INFO] Telemetria enviada para 10.0.1.10
+[DEBUG] startConnection: Enviando SYN (tentativa 2/5)
 [DEBUG] startConnection: SYN-ACK recebido de 10.0.1.10:8080
 [DEBUG] startConnection: Enviando ACK para completar handshake
 [DEBUG] startConnection: Handshake concluído com sucesso - seq=101
@@ -127,7 +123,8 @@ Pressione Ctrl+C para encerrar
 [INFO] Telemetria enviada para 10.0.1.10
 [PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/5)
 [RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[DEBUG] send: ACK do FIN recebido, conexão fechada com sucesso
+[INFO] Telemetria enviada para 10.0.1.10
+[DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
 [DEBUG] recvMissionLink: Confirmação enviada para 10.0.1.10:8080
 [INFO] Missão ID: M-001 recebida - iniciando execução
 [INFO] Executando missão M-001 (capture_images, 1min)
@@ -146,21 +143,24 @@ Pressione Ctrl+C para encerrar
 [INFO] Telemetria enviada para 10.0.1.10
 [INFO] Telemetria enviada para 10.0.1.10
 [INFO] Telemetria enviada para 10.0.1.10
-[INFO] Telemetria enviada para 10.0.1.10
-[INFO] Telemetria enviada para 10.0.1.10
 [DEBUG] send: Iniciando envio - missionType=P, idAgent=r1, idMission=M-001, tamanho=125 bytes, destino=10.0.1.10:8080
 [DEBUG] send: Iniciando handshake com 10.0.1.10:8080
 [DEBUG] startConnection: Iniciando handshake com 10.0.1.10:8080, idAgent=r1, retryLimit=5
 [DEBUG] startConnection: Enviando SYN (tentativa 1/5)
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: Z
-[DEBUG] acceptConnection: SYN-ACK recebido (é para startConnection()), ignorando - servidor vai reenviar
 [DEBUG] startConnection: SYN-ACK recebido de 10.0.1.10:8080
 [DEBUG] startConnection: Enviando ACK para completar handshake
 [DEBUG] startConnection: Handshake concluído com sucesso - seq=101
 [DEBUG] send: Handshake concluído - seq=101, ack=101
 [DEBUG] send: Mensagem cabe num único pacote (125 bytes)
 [DEBUG] send: Enviando mensagem completa (seq=101)
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
 [DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
 [DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
 [DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
@@ -170,173 +170,212 @@ Pressione Ctrl+C para encerrar
 [DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
 [OK] Missão M-001 concluída
 [INFO] Missão concluída - solicitando próxima missão à Nave-Mãe
-[INFO] Telemetria enviada para 10.0.1.10
 [DEBUG] send: Iniciando envio - missionType=Q, idAgent=r1, idMission=000, tamanho=7 bytes, destino=10.0.1.10:8080
 [DEBUG] send: Iniciando handshake com 10.0.1.10:8080
 [DEBUG] startConnection: Iniciando handshake com 10.0.1.10:8080, idAgent=r1, retryLimit=5
 [DEBUG] startConnection: Enviando SYN (tentativa 1/5)
+[INFO] Telemetria enviada para 10.0.1.10
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
 [INFO] Telemetria enviada para 10.0.1.10
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
 [DEBUG] startConnection: Enviando SYN (tentativa 2/5)
-[INFO] Telemetria enviada para 10.0.1.10
 [PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
-[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 2/5)
-[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: S
-[DEBUG] acceptConnection: SYN recebido de 10.0.1.10:8080, idAgent=r1
-[DEBUG] acceptConnection: SYN válido processado
-[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.1.10:8080, idAgent=r1
-[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK
-[RETRANSMISSÃO] Reenviando SYN-ACK para 10.0.1.10:8080 (ACK inválido)
-[RETRANSMISSÃO] Reenviando SYN-ACK para 10.0.1.10:8080 (ACK inválido)
 [INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do handshake de 10.0.1.10:8080 (tentativa 3/5)
-[RETRANSMISSÃO] Reenviando SYN-ACK para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
+[INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
 [DEBUG] startConnection: Enviando SYN (tentativa 3/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
 [INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do handshake de 10.0.1.10:8080 (tentativa 4/5)
-[RETRANSMISSÃO] Reenviando SYN-ACK para 10.0.1.10:8080
-[RETRANSMISSÃO] Reenviando SYN-ACK para 10.0.1.10:8080 (ACK inválido)
-[DEBUG] recvMissionLink: Aguardando mensagem...
-[DEBUG] recv: Iniciando receção - aguardando handshake
-[DEBUG] acceptConnection: Aguardando SYN...
-[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 2/5)
-[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[INFO] Telemetria enviada para 10.0.1.10
-[INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
 [DEBUG] startConnection: Enviando SYN (tentativa 4/5)
 [INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
 [INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
 [DEBUG] startConnection: Enviando SYN (tentativa 5/5)
 [INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
 [INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
 [INFO] Tentativa 1/3 falhou, a tentar novamente...
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
 [DEBUG] send: Iniciando envio - missionType=Q, idAgent=r1, idMission=000, tamanho=7 bytes, destino=10.0.1.10:8080
 [DEBUG] send: Iniciando handshake com 10.0.1.10:8080
 [DEBUG] startConnection: Iniciando handshake com 10.0.1.10:8080, idAgent=r1, retryLimit=5
 [DEBUG] startConnection: Enviando SYN (tentativa 1/5)
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 2/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 3/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 4/5)
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 2/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/5)
+[DEBUG] acceptConnection: SYN recebido de 10.0.1.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN válido processado
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.1.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK
+[DEBUG] acceptConnection: ACK recebido, handshake concluído - seq=100, ack=100
+[DEBUG] recv: Handshake concluído - idAgent=r1, seq=100, ack=100, origem=10.0.1.10:8080
+[DEBUG] recv: Aguardando primeira mensagem...
+[DEBUG] startConnection: Enviando SYN (tentativa 5/5)
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[INFO] Tentativa 2/3 falhou, a tentar novamente...
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[DEBUG] recv: Primeira mensagem recebida de 10.0.1.10:8080, tamanho=25 bytes
+[DEBUG] recv: Mensagem parseada - flag=D, idMission=M-001, seq=101, missionType=N
+[DEBUG] recv: Validando primeira mensagem - IP esperado=10.0.1.10, recebido=10.0.1.10, Porta esperada=8080, recebida=8080, Seq esperado=101, recebido=101
+[DEBUG] recv: Validação passou!
+[DEBUG] recv: idMission extraído: M-001
+[DEBUG] recv: Primeira mensagem válida - missionType=N, idMission=M-001, seq=101
+[DEBUG] recv: É uma mensagem, tamanho=5 bytes
+[DEBUG] recv: ACK da primeira mensagem enviado
+[DEBUG] recv: Aguardando chunks adicionais ou FIN...
+[DEBUG] recv: Chunk 1 recebido de 10.0.1.10:8080, tamanho=21 bytes
+[DEBUG] recv: Chunk parseado - flag=F, seq=102, esperado seq=102
+[DEBUG] recv: Chunk válido recebido (seq=102, tamanho mensagem=1 bytes)
+[DEBUG] recv: FIN recebido! Mensagem completa tem 5 bytes
+[DEBUG] recv: Último chunk adicionado (tamanho final: 6 bytes)
+[DEBUG] recv: Enviando ACK do FIN recebido (seq=102, ack=102)
+[DEBUG] recv: Enviando nosso próprio FIN (seq=103)
+[DEBUG] recv: Aguardando ACK do nosso FIN enviado
+[DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 5 bytes)
+[DEBUG] recvMissionLink: Mensagem recebida - missionType=N, idMission=M-001, idAgent=r1
+[DEBUG] recvMissionLink: Aguardando mensagem...
+[DEBUG] recv: Iniciando receção - aguardando handshake
+[DEBUG] acceptConnection: Aguardando SYN...
+[DEBUG] send: Iniciando envio - missionType=Q, idAgent=r1, idMission=000, tamanho=7 bytes, destino=10.0.1.10:8080
+[DEBUG] send: Iniciando handshake com 10.0.1.10:8080
+[DEBUG] startConnection: Iniciando handshake com 10.0.1.10:8080, idAgent=r1, retryLimit=5
+[DEBUG] startConnection: Enviando SYN (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 2/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 2/5)
+[DEBUG] startConnection: SYN-ACK recebido de 10.0.1.10:8080
+[DEBUG] startConnection: Enviando ACK para completar handshake
+[DEBUG] startConnection: Handshake concluído com sucesso - seq=101
+[DEBUG] send: Handshake concluído - seq=101, ack=101
+[DEBUG] send: Mensagem cabe num único pacote (7 bytes)
+[DEBUG] send: Enviando mensagem completa (seq=101)
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK da mensagem de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando mensagem para 10.0.1.10:8080
+[DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
+[DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
+[DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
+[DEBUG] send: Aguardando ACK do FIN enviado anteriormente...
+[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/5)
+[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
+[INFO] Pedido de missão enviado - aguardando resposta da Nave-Mãe
+[DEBUG] acceptConnection: SYN recebido de 10.0.1.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN válido processado
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.1.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK
+[DEBUG] acceptConnection: ACK recebido, handshake concluído - seq=100, ack=100
+[DEBUG] recv: Handshake concluído - idAgent=r1, seq=100, ack=100, origem=10.0.1.10:8080
+[DEBUG] recv: Aguardando primeira mensagem...
+[DEBUG] recv: Primeira mensagem recebida de 10.0.1.10:8080, tamanho=187 bytes
+[DEBUG] recv: Mensagem parseada - flag=D, idMission=M-004, seq=101, missionType=T
+[DEBUG] recv: Validando primeira mensagem - IP esperado=10.0.1.10, recebido=10.0.1.10, Porta esperada=8080, recebida=8080, Seq esperado=101, recebido=101
+[DEBUG] recv: Validação passou!
+[DEBUG] recv: idMission extraído: M-004
+[DEBUG] recv: Primeira mensagem válida - missionType=T, idMission=M-004, seq=101
+[DEBUG] recv: É uma mensagem, tamanho=165 bytes
+[DEBUG] recv: ACK da primeira mensagem enviado
+[DEBUG] recv: Aguardando chunks adicionais ou FIN...
+[DEBUG] recv: Chunk 1 recebido de 10.0.1.10:8080, tamanho=21 bytes
+[DEBUG] recv: Chunk parseado - flag=F, seq=102, esperado seq=102
+[DEBUG] recv: Chunk válido recebido (seq=102, tamanho mensagem=1 bytes)
+[DEBUG] recv: FIN recebido! Mensagem completa tem 165 bytes
+[DEBUG] recv: Último chunk adicionado (tamanho final: 166 bytes)
+[DEBUG] recv: Enviando ACK do FIN recebido (seq=102, ack=102)
+[DEBUG] recv: Enviando nosso próprio FIN (seq=103)
+[DEBUG] recv: Aguardando ACK do nosso FIN enviado
+[DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 165 bytes)
+[DEBUG] recvMissionLink: Mensagem recebida - missionType=T, idMission=M-004, idAgent=r1
+[DEBUG] recvMissionLink: É uma missão (taskRequest), processando...
+[DEBUG] recvMissionLink: Validando missão M-004...
+[DEBUG] recvMissionLink: Tipo da mensagem: <class 'str'>, tamanho: 165 bytes
+[DEBUG] recvMissionLink: Validação resultado: válida=True, erro=N/A
+[DEBUG] recvMissionLink: Fazendo parse do JSON (string)
+[DEBUG] recvMissionLink: Parse bem-sucedido - mission_id=M-004, rover_id=r1, task=sample_collection
+[DEBUG] recvMissionLink: Missão M-004 armazenada, enviando confirmação...
+[DEBUG] send: Iniciando envio - missionType=None, idAgent=r1, idMission=M-004, tamanho=5 bytes, destino=10.0.1.10:8080
+[DEBUG] send: Iniciando handshake com 10.0.1.10:8080
+[DEBUG] startConnection: Iniciando handshake com 10.0.1.10:8080, idAgent=r1, retryLimit=5
+[DEBUG] startConnection: Enviando SYN (tentativa 1/5)
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 2/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
 [INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 4/5)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
+[INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/5)
+[DEBUG] startConnection: Enviando SYN (tentativa 2/5)
+[DEBUG] startConnection: SYN-ACK recebido de 10.0.1.10:8080
+[DEBUG] startConnection: Enviando ACK para completar handshake
+[DEBUG] startConnection: Handshake concluído com sucesso - seq=101
+[DEBUG] send: Handshake concluído - seq=101, ack=101
+[DEBUG] send: Mensagem cabe num único pacote (5 bytes)
+[DEBUG] send: Enviando mensagem completa (seq=101)
+[DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
+[DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
+[DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
+[DEBUG] send: Aguardando ACK do FIN enviado anteriormente...
+[INFO] Telemetria enviada para 10.0.1.10
+[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/5)
+[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[INFO] Telemetria enviada para 10.0.1.10
+[DEBUG] send: Não recebeu ACK do FIN após 5 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
+[DEBUG] recvMissionLink: Confirmação enviada para 10.0.1.10:8080
+[INFO] Missão ID: M-004 recebida - iniciando execução
+[INFO] Executando missão M-004 (sample_collection, 3min)
+[DEBUG] recvMissionLink: Aguardando mensagem...
+[DEBUG] recv: Iniciando receção - aguardando handshake
+[DEBUG] acceptConnection: Aguardando SYN...
+[INFO] Telemetria enviada para 10.0.1.10
+[INFO] Telemetria enviada para 10.0.1.10
+[INFO] Telemetria enviada para 10.0.1.10
+[INFO] Telemetria enviada para 10.0.1.10
+[INFO] Telemetria enviada para 10.0.1.10
 ^C
 
 A encerrar Rover r1...
-[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
-[DEBUG] acceptConnection: Flag recebida: D
-[DEBUG] acceptConnection: Flag desconhecida recebida: D, ignorando
 Monitorização contínua de telemetria parada
 Rover r1 encerrado.
-root@Rover1:/tmp/nms# 
