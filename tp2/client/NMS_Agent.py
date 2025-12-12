@@ -447,6 +447,7 @@ class NMS_Agent:
         center_y = (y1 + y2) / 2.0
         
         # Estado inicial: mover para a área da missão
+        # Ficar "a caminho" apenas por 1-3 mensagens de telemetria (5-15 segundos)
         self.updateOperationalStatus("a caminho")
         self.updateVelocity(5.0)  # 5 m/s
         
@@ -462,16 +463,18 @@ class NMS_Agent:
             direction_deg = math.degrees(direction_rad)
             self.updateDirection(direction_deg)
         
-        # Simular movimento para a área da missão com mudanças pequenas
-        steps_to_area = int(distance / 2.0) + 1  # Passos de 2 metros (mais pequenos)
+        # Ficar "a caminho" apenas por 1-3 mensagens de telemetria (telemetria a cada 5s)
+        num_telemetry_updates_en_route = random.randint(1, 3)
         prev_x = current_x
         prev_y = current_y
-        for step in range(steps_to_area):
+        
+        # Fase "a caminho" - apenas 1-3 iterações de 5 segundos cada
+        for telemetry_idx in range(num_telemetry_updates_en_route):
             if distance > 0.1:
-                # Mover gradualmente em direção ao centro com mudanças pequenas (1-2 unidades)
-                progress = (step + 1) / steps_to_area
-                target_x = current_x + dx * progress
-                target_y = current_y + dy * progress
+                # Mover gradualmente em direção ao centro durante esta iteração
+                progress = (telemetry_idx + 1) / max(3, num_telemetry_updates_en_route)
+                target_x = current_x + dx * min(progress, 0.8)  # Não chegar completamente ao destino ainda
+                target_y = current_y + dy * min(progress, 0.8)
                 
                 # Mudanças incrementais variadas (2 a 5 valores)
                 step_x = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]) if abs(target_x - prev_x) > 1 else 0
@@ -489,11 +492,40 @@ class NMS_Agent:
                 self.updatePosition(new_x, new_y, 0.0)
                 prev_x = new_x
                 prev_y = new_y
-            time.sleep(0.5)  # Pequeno delay para simular movimento
+            
+            # Aguardar intervalo de telemetria (5 segundos) para enviar mensagens
+            if telemetry_idx < num_telemetry_updates_en_route - 1:
+                time.sleep(5.0)  # Intervalo de telemetria
         
-        # Chegou à área da missão - iniciar execução
+        # Mudar para "em missão" após 1-3 mensagens de telemetria
         self.updateOperationalStatus("em missão")
         self.updateVelocity(2.0)  # Velocidade reduzida durante execução
+        
+        # Continuar movimento até à área da missão (movimento rápido sem delays grandes)
+        steps_to_area = int(distance / 2.0) + 1
+        remaining_progress = 1.0 - min(0.8, num_telemetry_updates_en_route / max(3, num_telemetry_updates_en_route))
+        
+        if remaining_progress > 0 and distance > 0.1:
+            for step in range(int(steps_to_area * remaining_progress)):
+                progress = 0.8 + (step + 1) / (steps_to_area * remaining_progress) * 0.2
+                target_x = current_x + dx * progress
+                target_y = current_y + dy * progress
+                
+                step_x = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]) if abs(target_x - prev_x) > 1 else 0
+                step_y = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]) if abs(target_y - prev_y) > 1 else 0
+                
+                new_x = prev_x + step_x
+                new_y = prev_y + step_y
+                
+                if (dx > 0 and new_x > target_x) or (dx < 0 and new_x < target_x):
+                    new_x = prev_x
+                if (dy > 0 and new_y > target_y) or (dy < 0 and new_y < target_y):
+                    new_y = prev_y
+                    
+                self.updatePosition(new_x, new_y, 0.0)
+                prev_x = new_x
+                prev_y = new_y
+                time.sleep(0.5)  # Pequeno delay para simular movimento
         
         # Calcular duração total em segundos
         total_duration_seconds = float(duration_minutes) * 60.0
@@ -584,22 +616,31 @@ class NMS_Agent:
         # Enviar telemetria final antes de concluir missão
         self.createAndSendTelemetry(server_ip)
         
-        # Reportar progresso de conclusão da missão ao servidor
-        try:
-            progress_data = {
-                "mission_id": mission_id,
-                "status": "completed",
-                "progress_percent": 100,
-                "current_position": {
-                    "x": self.position["x"],
-                    "y": self.position["y"],
-                    "z": self.position["z"]
+        # Reportar progresso de conclusão da missão ao servidor (com retry)
+        max_retries = 3
+        progress_reported = False
+        for retry in range(max_retries):
+            try:
+                progress_data = {
+                    "mission_id": mission_id,
+                    "status": "completed",
+                    "progress_percent": 100,
+                    "current_position": {
+                        "x": self.position["x"],
+                        "y": self.position["y"],
+                        "z": self.position["z"]
+                    }
                 }
-            }
-            progress_json = json.dumps(progress_data)
-            self.missionLink.send(server_ip, self.missionLink.port, self.missionLink.reportProgress, self.id, mission_id, progress_json)
-        except Exception as e:
-            print(f"[ERRO] Erro ao reportar conclusão da missão: {e}")
+                progress_json = json.dumps(progress_data)
+                self.missionLink.send(server_ip, self.missionLink.port, self.missionLink.reportProgress, self.id, mission_id, progress_json)
+                progress_reported = True
+                break
+            except Exception as e:
+                if retry < max_retries - 1:
+                    print(f"[INFO] Tentativa {retry + 1}/{max_retries} de reportar conclusão falhou, a tentar novamente...")
+                    time.sleep(1)
+                else:
+                    print(f"[ERRO] Erro ao reportar conclusão da missão após {max_retries} tentativas: {e}")
         
         # Atualizar estado para "parado"
         self.updateOperationalStatus("parado")
