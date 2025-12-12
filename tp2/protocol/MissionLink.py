@@ -279,18 +279,18 @@ class MissionLink:
                 )
                 try:
                     # Aguardar um pouco antes de receber para dar tempo ao servidor enviar SYN-ACK
-                    time.sleep(0.3)
+                    time.sleep(0.1)  # Reduzido de 0.3s para 0.1s
                     # Usar lock para evitar que acceptConnection() consuma o SYN-ACK
                     synack_received = False
                     synack_retries = 0
-                    max_synack_retries = 10  # Aguardar até 10 tentativas de receber SYN-ACK
+                    max_synack_retries = 5  # Reduzido de 10 para 5 - suficiente para 1% packet loss
                     
                     while not synack_received and synack_retries < max_synack_retries:
                         try:
                             with self.sock_lock:
-                                # Timeout aumentado para dar mais tempo ao servidor responder
+                                # Timeout reduzido - 1% packet loss não precisa de 3s
                                 original_timeout_inner = self.sock.gettimeout()
-                                self.sock.settimeout(3.0)  # Timeout de 3s para receber SYN-ACK
+                                self.sock.settimeout(1.0)  # Timeout de 1s para receber SYN-ACK (reduzido de 3s)
                                 try:
                                     message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
                                 finally:
@@ -300,18 +300,18 @@ class MissionLink:
                             if len(lista) < 7:
                                 synack_retries += 1
                                 # Reenviar SYN se não recebeu resposta válida
-                                if synack_retries % 3 == 0:  # Reenviar a cada 3 tentativas
+                                if synack_retries % 2 == 0:  # Reenviar a cada 2 tentativas (reduzido de 3)
                                     self.sock.sendto(
                                         f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
                                         (destAddress, destPort)
                                     )
-                                time.sleep(0.5)
+                                time.sleep(0.1)  # Reduzido de 0.5s para 0.1s
                                 continue
                             
                             # Verificar se o pacote veio do destino correto
                             if recv_ip != destAddress or recv_port != destPort:
                                 synack_retries += 1
-                                time.sleep(0.2)
+                                time.sleep(0.05)  # Reduzido de 0.2s para 0.05s
                                 continue  # Continuar a aguardar sem incrementar retries principais
                             
                             # Verificar se recebeu SYN-ACK válido
@@ -322,7 +322,7 @@ class MissionLink:
                             else:
                                 # Recebeu outro tipo de pacote, continuar a aguardar
                                 synack_retries += 1
-                                time.sleep(0.2)
+                                time.sleep(0.05)  # Reduzido de 0.2s para 0.05s
                                 continue
                                 
                         except socket.timeout:
@@ -335,11 +335,11 @@ class MissionLink:
                                     f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
                                     (destAddress, destPort)
                                 )
-                            time.sleep(0.3)
+                            time.sleep(0.1)  # Reduzido de 0.3s para 0.1s
                             continue
                         except Exception:
                             synack_retries += 1
-                            time.sleep(0.3)
+                            time.sleep(0.1)  # Reduzido de 0.3s para 0.1s
                             continue
                     
                     # Se não recebeu SYN-ACK após múltiplas tentativas, incrementar retry principal
@@ -401,7 +401,7 @@ class MissionLink:
         # NOTA: Usar lock APENAS durante recvfrom() para evitar race conditions
         #       Mas libertar lock imediatamente após receber pacote para dar oportunidade ao startConnection()
         original_timeout = self.sock.gettimeout()
-        self.sock.settimeout(1.0)  # Timeout de 1s para dar mais oportunidades ao startConnection()
+        self.sock.settimeout(0.5)  # Timeout reduzido de 1s para 0.5s - mais responsivo
         
         while True:
             try:
@@ -464,7 +464,7 @@ class MissionLink:
         print(f"[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK")
         # RECEBER ACK
         ack_retries = 0
-        max_ack_retries = 10
+        max_ack_retries = 5  # Reduzido de 10 para 5 - suficiente para 1% packet loss
         while ack_retries < max_ack_retries:
             try:
                 # Usar lock para evitar race conditions
@@ -682,7 +682,7 @@ class MissionLink:
                                             # Aguardar ACK do FIN que enviamos anteriormente para completar o handshake
                                             print(f"[DEBUG] send: Aguardando ACK do FIN enviado anteriormente...")
                                             ack_retries = 0
-                                            max_ack_retries = 10
+                                            max_ack_retries = 5  # Reduzido de 10 para 5 - suficiente para 1% packet loss
                                             while ack_retries < max_ack_retries:
                                                 try:
                                                     with self.sock_lock:
@@ -1011,7 +1011,7 @@ class MissionLink:
                             # Passo 4: Aguardar ACK do nosso FIN
                             print(f"[DEBUG] recv: Aguardando ACK do nosso FIN enviado")
                             fin_ack_retries = 0
-                            max_fin_ack_retries = 10
+                            max_fin_ack_retries = 5  # Reduzido de 10 para 5 - suficiente para 1% packet loss
                             while fin_ack_retries < max_fin_ack_retries:
                                 try:
                                     ack_response, (ack_ip, ack_port) = self.sock.recvfrom(self.limit.buffersize)
