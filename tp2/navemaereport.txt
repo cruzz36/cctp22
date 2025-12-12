@@ -1,5 +1,5 @@
-root@NaveMae:/tmp/pycore.40153/NaveMae.conf# cd /tmp/nms
-root@NaveMae:/tmp/nms# python3 start_nms.py
+root@NaveMae:/tmp/pycore.40153/NaveMae.conf# cd /tmp/nms                       
+root@NaveMae:/tmp/nms# python3 start_nms.py               
 ============================================================
 NAVE-MÃE - Iniciando...
 ============================================================
@@ -35,6 +35,7 @@ Pressione Ctrl+C para encerrar
 
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Recebido pacote de 10.0.3.10:8080
 [DEBUG] acceptConnection: SYN válido recebido de 10.0.3.10:8080
 [DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080 (idAgent=r1), enviando SYN-ACK
@@ -54,6 +55,13 @@ Pressione Ctrl+C para encerrar
 [DEBUG] startConnection: Recebido SYN-ACK válido, enviando ACK
 [DEBUG] startConnection: Handshake concluído com sucesso
 [DEBUG] send: Handshake concluído, iniciando envio de dados
+[DEBUG] send: Mensagem dividida em chunks: str
+[DEBUG] send: Enviando mensagem curta (missionType=None, idMission=000, message_len=10)
+[DEBUG] send: Mensagem enviada, aguardando ACK...
+[DEBUG] send: Recebido pacote de 10.0.3.10:8080
+[DEBUG] send: Verificando ACK - responseIp=10.0.3.10, ip=10.0.3.10, responsePort=8080, port=8080, flag=A, ack=101, seq=101, idMission=000
+[DEBUG] send: ACK válido recebido, enviando FIN
+[DEBUG] send: FIN enviado, aguardando resposta...
 [DEBUG] send: Iniciando handshake antes de enviar mensagem (missionType=T, idAgent=r1, idMission=M-001)
 [DEBUG] startConnection: Iniciando handshake com 10.0.3.10:8080 (idAgent=r1, retryLimit=5)
 [DEBUG] startConnection: Enviando SYN para 10.0.3.10:8080 (tentativa 1/5)
@@ -63,6 +71,13 @@ Pressione Ctrl+C para encerrar
 [DEBUG] startConnection: Recebido SYN-ACK válido, enviando ACK
 [DEBUG] startConnection: Handshake concluído com sucesso
 [DEBUG] send: Handshake concluído, iniciando envio de dados
+[DEBUG] send: Mensagem dividida em chunks: str
+[DEBUG] send: Enviando mensagem curta (missionType=T, idMission=M-001, message_len=162)
+[DEBUG] send: Mensagem enviada, aguardando ACK...
+[DEBUG] send: Recebido pacote de 10.0.3.10:8080
+[DEBUG] send: Verificando ACK - responseIp=10.0.3.10, ip=10.0.3.10, responsePort=8080, port=8080, flag=A, ack=101, seq=101, idMission=M-001
+[DEBUG] send: ACK válido recebido, enviando FIN
+[DEBUG] send: FIN enviado, aguardando resposta...
 [INFO] Missão M-001 enviada e confirmada por rover r1
 [DEBUG] recvMissionLink: Aguardando próxima mensagem...
 [DEBUG] recv: Iniciando receção de mensagem (servidor)
@@ -85,68 +100,51 @@ Pressione Ctrl+C para encerrar
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552355_748853.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552672_634615.json
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552360_757871.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552677_645409.json
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552365_761355.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552370_768644.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552375_776257.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552682_652717.json
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552380_783960.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552385_791455.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552687_660367.json
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552388_785451.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552690_661060.json
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Recebido pacote de 10.0.3.10:8080
 [DEBUG] acceptConnection: SYN válido recebido de 10.0.3.10:8080
 [DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080 (idAgent=r1), enviando SYN-ACK
 [DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK...
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552390_794605.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552692_664248.json
 [DEBUG] acceptConnection: Timeout ao aguardar ACK, reenviando SYN-ACK
 [DEBUG] acceptConnection: Verificando ACK - flag=A, idAgent=r1, esperado=r1
 [DEBUG] acceptConnection: ACK válido recebido, handshake concluído
 [DEBUG] recv: Conexão aceite de 10.0.3.10:8080 (idAgent=r1)
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552395_802503.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552697_671640.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552400_810034.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552702_674377.json
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552405_817554.json
-[INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552410_820830.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552707_677000.json
 ^C
+
+A encerrar Nave-Mãe...
+Aguardando threads terminarem...
+Nave-Mãe encerrada.
+root@NaveMae:/tmp/nms# 

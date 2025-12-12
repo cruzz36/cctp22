@@ -588,7 +588,9 @@ class MissionLink:
                 print(f"[DEBUG] send: Mensagem enviada, aguardando ACK...")
                 while True: 
                     try:
-                        text,(responseIp,responsePort) = self.sock.recvfrom(self.limit.buffersize)
+                        # Usar lock para evitar que acceptConnection() consuma o ACK
+                        with self.sock_lock:
+                            text,(responseIp,responsePort) = self.sock.recvfrom(self.limit.buffersize)
                         print(f"[DEBUG] send: Recebido pacote de {responseIp}:{responsePort}")
                         lista = text.decode().split("|")
                         # Bug fix: Validar formato da mensagem antes de aceder a índices
@@ -612,7 +614,9 @@ class MissionLink:
                             # Aguarda ACK do FIN enviado OU FIN do outro lado
                             while True:
                                 try:
-                                    text,(responseIp,responsePort) = self.sock.recvfrom(self.limit.buffersize)
+                                    # Usar lock para evitar que acceptConnection() consuma pacotes
+                                    with self.sock_lock:
+                                        text,(responseIp,responsePort) = self.sock.recvfrom(self.limit.buffersize)
                                     lista = text.decode().split("|")
                                     # Validar formato da mensagem
                                     if len(lista) < 7:
@@ -760,16 +764,23 @@ class MissionLink:
         missionType = ""
 
         # We get the first message with data to know if it is a message or a file 
+        print(f"[DEBUG] recv: Aguardando primeira mensagem de dados de {ipDest}:{portDest} (seq esperado: {seq + 1})")
         firstMessage = None
         while firstMessage == None:
             try:
-                firstMessage,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
+                print(f"[DEBUG] recv: Aguardando primeira mensagem...")
+                # Usar lock para evitar race conditions com send()
+                with self.sock_lock:
+                    firstMessage,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
+                print(f"[DEBUG] recv: Recebido pacote de {ip}:{port}")
                 lista = firstMessage.decode().split("|")
                 # Validar formato da mensagem
                 if len(lista) < 7:
                     # Mensagem malformada - ignorar e continuar
+                    print(f"[DEBUG] recv: Mensagem malformada (len={len(lista)}), ignorando")
                     firstMessage = None
                     continue
+                print(f"[DEBUG] recv: Validando mensagem - ip={ip} (esperado {ipDest}), port={port} (esperado {portDest}), seq={lista[seqPos]} (esperado {seq + 1}), flag={lista[flagPos]}")
                 # Bug fix: Extrair idMission apenas quando a validação de IP/porta/seq passar
                 #          Se extrairmos idMission de uma mensagem com formato válido mas IP/porta/seq incorretos,
                 #          podemos extrair o idMission errado de um emissor diferente, causando rejeição de mensagens válidas
@@ -780,6 +791,7 @@ class MissionLink:
                     port == portDest and
                     lista[seqPos] == str(seq + 1)
                 ):
+                    print(f"[DEBUG] recv: Validação passou - mensagem válida recebida")
                     # Extrair idMission apenas quando validação completa passar
                     if idMission is None:
                         idMission = lista[idMissionPos]  # Extrai idMission da primeira mensagem válida
@@ -805,8 +817,10 @@ class MissionLink:
                     #          mas NÃO resetar missionType - ele será atualizado quando uma mensagem válida for recebida
                     #          O problema é que missionType permanece "" se a primeira mensagem falhar,
                     #          mas isso é correto porque ainda não recebemos uma mensagem válida
+                    print(f"[DEBUG] recv: Validação falhou - ignorando pacote")
                     firstMessage = None
             except socket.timeout:
+                print(f"[DEBUG] recv: Timeout ao aguardar primeira mensagem")
                 firstMessage = None
                 continue
             except Exception as e:

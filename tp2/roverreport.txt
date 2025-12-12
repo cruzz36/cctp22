@@ -1,4 +1,4 @@
-root@Rover1:/tmp/pycore.40153/Rover1.conf# cd /tmp/nms
+root@Rover1:/tmp/pycore.40153/Rover1.conf# cd /tmp/nms                         
 root@Rover1:/tmp/nms# python3 start_rover.py 10.0.1.10 r1
 ============================================================
 ROVER r1 - Iniciando...
@@ -14,6 +14,13 @@ Intervalo de telemetria: 5 segundos
 [DEBUG] startConnection: Recebido SYN-ACK válido, enviando ACK
 [DEBUG] startConnection: Handshake concluído com sucesso
 [DEBUG] send: Handshake concluído, iniciando envio de dados
+[DEBUG] send: Mensagem dividida em chunks: str
+[DEBUG] send: Enviando mensagem curta (missionType=R, idMission=000, message_len=1)
+[DEBUG] send: Mensagem enviada, aguardando ACK...
+[DEBUG] send: Recebido pacote de 10.0.1.10:8080
+[DEBUG] send: Verificando ACK - responseIp=10.0.1.10, ip=10.0.1.10, responsePort=8080, port=8080, flag=A, ack=101, seq=101, idMission=000
+[DEBUG] send: ACK válido recebido, enviando FIN
+[DEBUG] send: FIN enviado, aguardando resposta...
 [DEBUG] recv: Iniciando receção de mensagem (servidor)
 [DEBUG] recv: Chamando acceptConnection()...
 [DEBUG] acceptConnection: Aguardando SYN...
@@ -45,8 +52,15 @@ Intervalo de telemetria: 5 segundos
 [DEBUG] startConnection: Recebido SYN-ACK válido, enviando ACK
 [DEBUG] startConnection: Handshake concluído com sucesso
 [DEBUG] send: Handshake concluído, iniciando envio de dados
+[DEBUG] send: Mensagem dividida em chunks: str
+[DEBUG] send: Enviando mensagem curta (missionType=None, idMission=M-001, message_len=5)
+[DEBUG] send: Mensagem enviada, aguardando ACK...
+[DEBUG] send: Recebido pacote de 10.0.1.10:8080
+[DEBUG] send: Verificando ACK - responseIp=10.0.1.10, ip=10.0.1.10, responsePort=8080, port=8080, flag=A, ack=101, seq=101, idMission=M-001
+[DEBUG] send: ACK válido recebido, enviando FIN
+[DEBUG] send: FIN enviado, aguardando resposta...
 [INFO] Missão ID: M-001 recebida - iniciando execução
-[INFO] Executando missão M-001 (capture_images, 0.5min)
+[INFO] Executando missão M-001 (capture_images, 0.25min)
 [DEBUG] recv: Iniciando receção de mensagem (servidor)
 [DEBUG] recv: Chamando acceptConnection()...
 [DEBUG] acceptConnection: Aguardando SYN...
@@ -83,26 +97,9 @@ Pressione Ctrl+C para encerrar
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [OK] Missão M-001 concluída
 [INFO] Missão concluída - solicitando próxima missão à Nave-Mãe
 [DEBUG] requestMission: Iniciando solicitação de missão para 10.0.1.10:8080
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [DEBUG] requestMission: Tentativa 1/3 - chamando missionLink.send()
 [DEBUG] send: Iniciando handshake antes de enviar mensagem (missionType=Q, idAgent=r1, idMission=000)
 [DEBUG] startConnection: Iniciando handshake com 10.0.1.10:8080 (idAgent=r1, retryLimit=5)
@@ -116,37 +113,53 @@ Pressione Ctrl+C para encerrar
 [DEBUG] startConnection: Recebido SYN-ACK válido, enviando ACK
 [DEBUG] startConnection: Handshake concluído com sucesso
 [DEBUG] send: Handshake concluído, iniciando envio de dados
+[DEBUG] send: Mensagem dividida em chunks: str
+[DEBUG] send: Enviando mensagem curta (missionType=Q, idMission=000, message_len=7)
+[DEBUG] send: Mensagem enviada, aguardando ACK...
 [DEBUG] acceptConnection: Recebido pacote de 10.0.1.10:8080
 [DEBUG] acceptConnection: Flag=A, esperado=S, ignorando pacote
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[INFO] Telemetria enviada para 10.0.1.10
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [INFO] Telemetria enviada para 10.0.1.10
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [INFO] Telemetria enviada para 10.0.1.10
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
+[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
+[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
+[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[INFO] Telemetria enviada para 10.0.1.10
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
+[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
+[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 ^C
 
 A encerrar Rover r1...
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 [DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...
 Monitorização contínua de telemetria parada
 Rover r1 encerrado.
 root@Rover1:/tmp/nms# ^C
