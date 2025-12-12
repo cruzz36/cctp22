@@ -768,11 +768,13 @@ class MissionLink:
 
         # We get the first message with data to know if it is a message or a file 
         firstMessage = None
+        print(f"[DEBUG] recv: Aguardando primeira mensagem...")
         while firstMessage == None:
             try:
                 # Usar lock para evitar race conditions com send()
                 with self.sock_lock:
                     firstMessage,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
+                print(f"[DEBUG] recv: Primeira mensagem recebida de {ip}:{port}")
                 lista = firstMessage.decode().split("|")
                 # Validar formato da mensagem
                 if len(lista) < 7:
@@ -801,13 +803,17 @@ class MissionLink:
                     missionType = lista[missionTypePos]
                     seq += 1
                     ack = seq
+                    print(f"[DEBUG] recv: Primeira mensagem válida - missionType={missionType}, idMission={idMission}, seq={seq}")
                     if lista[messagePos].endswith(".json"):
                         # É um ficheiro
                         fileName = lista[messagePos]
+                        print(f"[DEBUG] recv: É um ficheiro: {fileName}")
                     else:
                         # É uma mensagem
                         firstMessage = lista[messagePos]
+                        print(f"[DEBUG] recv: É uma mensagem, tamanho={len(firstMessage)} bytes")
                     self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
+                    print(f"[DEBUG] recv: ACK da primeira mensagem enviado")
                     break
                 else:
                     # Bug fix: Se validação falhar, resetar firstMessage para None

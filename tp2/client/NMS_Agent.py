@@ -372,9 +372,12 @@ class NMS_Agent:
         Returns:
             dict or None: Dicionário com dados da missão validada, ou None se não for missão válida
         """
+        print(f"[DEBUG] recvMissionLink: Aguardando mensagem...")
         lista = self.missionLink.recv()
+        print(f"[DEBUG] recvMissionLink: Mensagem recebida - missionType={lista[2]}, idMission={lista[1]}, idAgent={lista[0]}")
         
         if lista[2] == self.missionLink.taskRequest:
+            print(f"[DEBUG] recvMissionLink: É uma missão (taskRequest), processando...")
             mission_message = lista[3]
             mission_id = lista[1]
             
@@ -397,9 +400,11 @@ class NMS_Agent:
             
             # Armazenar missão validada
             self.tasks[mission_id] = mission_data
+            print(f"[DEBUG] recvMissionLink: Missão {mission_id} armazenada, enviando confirmação...")
             
             # Enviar ACK de confirmação
             self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, mission_id)
+            print(f"[DEBUG] recvMissionLink: Confirmação enviada para {lista[4]}:{self.missionLink.port}")
             
             # Verificar se já há missão em execução
             if self.mission_executing:
