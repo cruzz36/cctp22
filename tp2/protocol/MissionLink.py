@@ -578,29 +578,36 @@ class MissionLink:
 
         else:
             chunks = self.splitMessage(message)
+            print(f"[DEBUG] send: Mensagem dividida em chunks: {type(chunks).__name__}")
 
             # If chunks is a string, only a packet with data is sent
             # The next one is a connection closing one
             if isinstance(chunks,str):
+                print(f"[DEBUG] send: Enviando mensagem curta (missionType={missionType}, idMission={idMission}, message_len={len(chunks)})")
                 self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks),(ip,port))
+                print(f"[DEBUG] send: Mensagem enviada, aguardando ACK...")
                 while True: 
                     try:
                         text,(responseIp,responsePort) = self.sock.recvfrom(self.limit.buffersize)
+                        print(f"[DEBUG] send: Recebido pacote de {responseIp}:{responsePort}")
                         lista = text.decode().split("|")
                         # Bug fix: Validar formato da mensagem antes de aceder a índices
                         if len(lista) < 7:
                             # Mensagem malformada - retransmitir mensagem
                             self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks),(ip,port))
                             continue
+                        print(f"[DEBUG] send: Verificando ACK - responseIp={responseIp}, ip={ip}, responsePort={responsePort}, port={port}, flag={lista[flagPos]}, ack={lista[ackPos]}, seq={seq}, idMission={lista[idMissionPos]}")
                         if (responseIp == ip and
                             responsePort == port and
                             lista[ackPos] == str(seq) and 
                             lista[flagPos] == self.ackkey and
                             lista[idMissionPos] == idMission  # Validação de segurança: verifica idMission
                             ):
+                            print(f"[DEBUG] send: ACK válido recebido, enviando FIN")
                             seq += 1
                             ack = seq
                             self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
+                            print(f"[DEBUG] send: FIN enviado, aguardando resposta...")
                             # Fechamento bidirecional completo (4-way handshake)
                             # Aguarda ACK do FIN enviado OU FIN do outro lado
                             while True:
@@ -644,6 +651,7 @@ class MissionLink:
                         continue
                     except socket.timeout:
                         # Timeout ao aguardar ACK - retransmitir mensagem
+                        print(f"[DEBUG] send: Timeout ao aguardar ACK, retransmitindo mensagem...")
                         self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks),(ip,port))
                         continue
                     except Exception as e:
