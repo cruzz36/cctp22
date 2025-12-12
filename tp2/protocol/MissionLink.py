@@ -429,7 +429,23 @@ class MissionLink:
                     # Delay maior para dar tempo ao startConnection() de receber o próximo SYN-ACK do servidor
                     time.sleep(1.0)
                     continue
+                elif flag == self.finkey:
+                    # FIN recebido - pode ser de uma conexão anterior que ainda está a fechar
+                    # Responder com ACK para ajudar a fechar a conexão
+                    print(f"[DEBUG] acceptConnection: FIN recebido de {ip}:{port} (pode ser de conexão anterior), respondendo com ACK")
+                    try:
+                        fin_seq = int(lista[seqPos]) if len(lista) > seqPos else 0
+                        fin_ack = int(lista[ackPos]) if len(lista) > ackPos else 0
+                        fin_idMission = lista[idMissionPos] if len(lista) > idMissionPos else "000"
+                        # Enviar ACK do FIN
+                        ack_response = self.formatMessage(None, self.ackkey, fin_idMission, fin_seq + 1, fin_seq, self.eofkey)
+                        self.sock.sendto(ack_response, (ip, port))
+                        print(f"[DEBUG] acceptConnection: ACK do FIN enviado para {ip}:{port}")
+                    except Exception as e:
+                        print(f"[DEBUG] acceptConnection: Erro ao processar FIN: {e}")
+                    continue
                 else:
+                    print(f"[DEBUG] acceptConnection: Flag desconhecida recebida: {flag}, ignorando")
                     continue
             except socket.timeout:
                 # Timeout é normal - lock já foi libertado, então startConnection() pode receber SYN-ACK
@@ -656,14 +672,45 @@ class MissionLink:
                                         lista[idMissionPos] == idMission
                                     ):
                                         if lista[flagPos] == self.finkey:
-                                            # Recebeu FIN do outro lado - responder com ACK e terminar
+                                            # Recebeu FIN do outro lado - responder com ACK
                                             # Bug fix: Deve reconhecer o número de sequência do FIN recebido (lista[seqPos])
                                             #          e incrementar o nosso próprio seq para o próximo pacote
                                             seq += 1
                                             ack = int(lista[seqPos])  # Reconhecer o seq do FIN recebido
-                                            print(f"[DEBUG] send: FIN recebido do outro lado, enviando FIN-ACK (seq={seq}, ack={ack})")
+                                            print(f"[DEBUG] send: FIN recebido do outro lado, enviando ACK (seq={seq}, ack={ack})")
                                             self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
-                                            print(f"[DEBUG] send: Conexão fechada com sucesso")
+                                            # Aguardar ACK do FIN que enviamos anteriormente para completar o handshake
+                                            print(f"[DEBUG] send: Aguardando ACK do FIN enviado anteriormente...")
+                                            ack_retries = 0
+                                            max_ack_retries = 10
+                                            while ack_retries < max_ack_retries:
+                                                try:
+                                                    with self.sock_lock:
+                                                        ack_response, (ack_ip, ack_port) = self.sock.recvfrom(self.limit.buffersize)
+                                                    ack_lista = ack_response.decode().split("|")
+                                                    if (len(ack_lista) == 7 and
+                                                        ack_ip == ip and
+                                                        ack_port == port and
+                                                        ack_lista[flagPos] == self.ackkey and
+                                                        ack_lista[idMissionPos] == idMission and
+                                                        ack_lista[ackPos] == str(seq - 1)):  # ACK do nosso FIN (seq anterior)
+                                                        print(f"[DEBUG] send: ACK do FIN recebido, conexão fechada com sucesso")
+                                                        return True
+                                                except socket.timeout:
+                                                    ack_retries += 1
+                                                    if ack_retries % 3 == 0:
+                                                        print(f"[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa {ack_retries}/{max_ack_retries})")
+                                                        print(f"[RETRANSMISSÃO] Reenviando FIN para {ip}:{port}")
+                                                        self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq-1,ack,self.eofkey),(ip,port))
+                                                    continue
+                                                except Exception as e:
+                                                    print(f"[DEBUG] send: Erro ao aguardar ACK do FIN: {e}")
+                                                    ack_retries += 1
+                                                    if ack_retries >= max_ack_retries:
+                                                        break
+                                                    continue
+                                            # Se chegou aqui, não recebeu ACK mas já enviou ACK do FIN recebido, conexão considerada fechada
+                                            print(f"[DEBUG] send: Não recebeu ACK do FIN após {max_ack_retries} tentativas, mas já enviou ACK do FIN recebido - conexão fechada")
                                             return True
                                         elif (lista[flagPos] == self.ackkey and 
                                               lista[ackPos] == str(seq) and
@@ -941,11 +988,31 @@ class MissionLink:
                             if prevMessage is not None:
                                 message += prevMessage
                                 print(f"[DEBUG] recv: Último chunk adicionado (tamanho final: {len(message)} bytes)")
-                            print(f"[DEBUG] recv: Enviando FIN-ACK (seq={seq})")
+                            
+                            # Handshake de 4 vias correto:
+                            # 1. Servidor envia FIN -> rover recebe
+                            # 2. Rover envia ACK do FIN recebido
+                            # 3. Rover envia seu próprio FIN
+                            # 4. Servidor envia ACK do FIN do rover
+                            
+                            # Passo 2: Enviar ACK do FIN recebido primeiro
+                            fin_seq_received = int(lista[seqPos])
+                            fin_ack_seq = seq  # ACK do nosso lado
+                            fin_ack = fin_seq_received  # Reconhecer o seq do FIN recebido
+                            print(f"[DEBUG] recv: Enviando ACK do FIN recebido (seq={fin_ack_seq}, ack={fin_ack})")
+                            self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,fin_ack_seq,fin_ack,self.eofkey),(ip,port))
+                            
+                            # Passo 3: Enviar nosso próprio FIN
+                            seq += 1
+                            ack = seq
+                            print(f"[DEBUG] recv: Enviando nosso próprio FIN (seq={seq})")
                             self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
-                            # Aguardar ACK do FIN enviado para garantir fechamento robusto
-                            print(f"[DEBUG] recv: Aguardando ACK do FIN enviado")
-                            while True:
+                            
+                            # Passo 4: Aguardar ACK do nosso FIN
+                            print(f"[DEBUG] recv: Aguardando ACK do nosso FIN enviado")
+                            fin_ack_retries = 0
+                            max_fin_ack_retries = 10
+                            while fin_ack_retries < max_fin_ack_retries:
                                 try:
                                     ack_response, (ack_ip, ack_port) = self.sock.recvfrom(self.limit.buffersize)
                                     ack_lista = ack_response.decode().split("|")
@@ -955,27 +1022,38 @@ class MissionLink:
                                         len(ack_lista) == 7 and
                                         ack_lista[flagPos] == self.ackkey and
                                         ack_lista[idMissionPos] == idMission and
-                                        ack_lista[ackPos] == str(seq)
+                                        ack_lista[ackPos] == str(seq)  # ACK do nosso FIN
                                     ):
-                                        # Recebeu ACK do FIN - conexão fechada corretamente
+                                        # Recebeu ACK do nosso FIN - conexão fechada corretamente
                                         # Bug fix: Remover \x00 (EOF) do final da mensagem se existir
                                         #          O eofkey é usado apenas em ACKs/FINs, não deve aparecer no conteúdo da mensagem
                                         #          Mas pode aparecer incorretamente devido a bugs anteriores ou retransmissões
                                         if message and message.endswith(self.eofkey):
                                             message = message[:-1]
-                                        print(f"[DEBUG] recv: ACK do FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: {len(message)} bytes)")
+                                        print(f"[DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: {len(message)} bytes)")
                                         return [idAgent,idMission,missionType,message,ip]
                                 except socket.timeout:
                                     # Reenvia FIN se não receber ACK
-                                    print(f"[PACKET LOSS] Timeout ao aguardar ACK do FIN de {ip}:{port} (recv)")
-                                    print(f"[RETRANSMISSÃO] Reenviando FIN para {ip}:{port}")
-                                    self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
+                                    fin_ack_retries += 1
+                                    if fin_ack_retries % 3 == 0:
+                                        print(f"[PACKET LOSS] Timeout ao aguardar ACK do nosso FIN de {ip}:{port} (recv) (tentativa {fin_ack_retries}/{max_fin_ack_retries})")
+                                        print(f"[RETRANSMISSÃO] Reenviando nosso FIN para {ip}:{port}")
+                                        self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                                     continue
                                 except Exception as e:
-                                    print(f"Erro ao aguardar ACK do FIN: {e}")
+                                    print(f"Erro ao aguardar ACK do nosso FIN: {e}")
+                                    fin_ack_retries += 1
+                                    if fin_ack_retries >= max_fin_ack_retries:
+                                        break
                                     # Reenviar FIN
                                     self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                                     continue
+                            
+                            # Se chegou aqui, não recebeu ACK mas já enviou ACK do FIN recebido e nosso próprio FIN
+                            print(f"[DEBUG] recv: Não recebeu ACK do nosso FIN após {max_fin_ack_retries} tentativas, mas já enviou ACK do FIN recebido - retornando mensagem")
+                            if message and message.endswith(self.eofkey):
+                                message = message[:-1]
+                            return [idAgent,idMission,missionType,message,ip]
                         # Enviar ACK do chunk recebido
                         # Bug fix: ACK deve ter missionType=None, não o missionType do chunk recebido
                         #          Todos os outros ACKs no código usam None corretamente

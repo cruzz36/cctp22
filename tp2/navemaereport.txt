@@ -1,19 +1,14 @@
-root@NaveMae:/tmp/pycore.40153/NaveMae.conf# cd /tmp/nms                       
-root@NaveMae:/tmp/nms# python3 start_nms.py               
+root@NaveMae:/tmp/nms# python3 start_nms.py
 ============================================================
 NAVE-MÃE - Iniciando...
 ============================================================
 [INFO] A limpar processos antigos e portas 8080/8081/8082...
 [INFO] API de Observação inicializada (host=0.0.0.0, port=8082)
-[DEBUG] recvMissionLink: Thread iniciada, aguardando mensagens de rovers...
+[DEBUG] recv: Iniciando receção - aguardando handshake
 [OK] MissionLink (UDP:8080) iniciado
-[DEBUG] recvMissionLink: Aguardando próxima mensagem...
-[DEBUG] recv: Iniciando receção de mensagem (servidor)
-[DEBUG] recv: Chamando acceptConnection()...
 [DEBUG] acceptConnection: Aguardando SYN...
 [INFO] Servidor TelemetryStream iniciado em 10.0.1.10:8081
 [OK] TelemetryStream (TCP:8081) iniciado
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [API] A iniciar API de Observação em http://0.0.0.0:8082
  * Serving Flask app "API.ObservationAPI" (lazy loading)
  * Environment: production
@@ -22,8 +17,6 @@ NAVE-MÃE - Iniciando...
  * Debug mode: off
 [OK] API de Observação iniciada em http://0.0.0.0:8082
 [INFO] Documentação disponível em http://0.0.0.0:8082/
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
 [OK] API de Observação (HTTP:8082) iniciada
 [INFO] API acessível em: http://10.0.1.10:8082
 ============================================================
@@ -33,118 +26,133 @@ Nave-Mãe pronta e a escutar!
 Aguardando conexões de rovers...
 Pressione Ctrl+C para encerrar
 
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Recebido pacote de 10.0.3.10:8080
-[DEBUG] acceptConnection: SYN válido recebido de 10.0.3.10:8080
-[DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080 (idAgent=r1), enviando SYN-ACK
-[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK...
-[DEBUG] acceptConnection: Verificando ACK - flag=A, idAgent=r1, esperado=r1
-[DEBUG] acceptConnection: ACK válido recebido, handshake concluído
-[DEBUG] recv: Conexão aceite de 10.0.3.10:8080 (idAgent=r1)
-[DEBUG] recvMissionLink: Mensagem recebida: idAgent=r1, idMission=000, missionType=R, ip=10.0.3.10
-[DEBUG] recvMissionLink: Processando registo de rover (idAgent=r1, ip=10.0.3.10)
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: S
+[DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN válido processado
+[DEBUG] acceptConnection: Enviando SYN-ACK para 10.0.3.10:8080, idAgent=r1
+[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK
+[DEBUG] acceptConnection: ACK recebido, handshake concluído - seq=100, ack=100
+[DEBUG] recv: Handshake concluído - idAgent=r1, seq=100, ack=100, origem=10.0.3.10:8080
+[DEBUG] recv: Aguardando primeira mensagem...
+[DEBUG] recv: Primeira mensagem recebida de 10.0.3.10:8080, tamanho=19 bytes
+[DEBUG] recv: Mensagem parseada - flag=D, idMission=000, seq=101, missionType=R
+[DEBUG] recv: Validando primeira mensagem - IP esperado=10.0.3.10, recebido=10.0.3.10, Porta esperada=8080, recebida=8080, Seq esperado=101, recebido=101
+[DEBUG] recv: Validação passou!
+[DEBUG] recv: idMission extraído: 000
+[DEBUG] recv: Primeira mensagem válida - missionType=R, idMission=000, seq=101
+[DEBUG] recv: É uma mensagem, tamanho=1 bytes
+[DEBUG] recv: ACK da primeira mensagem enviado
+[DEBUG] recv: Aguardando chunks adicionais ou FIN...
+[DEBUG] recv: Chunk 1 recebido de 10.0.3.10:8080, tamanho=19 bytes
+[DEBUG] recv: Chunk parseado - flag=F, seq=102, esperado seq=102
+[DEBUG] recv: Chunk válido recebido (seq=102, tamanho mensagem=1 bytes)
+[DEBUG] recv: FIN recebido! Mensagem completa tem 1 bytes
+[DEBUG] recv: Último chunk adicionado (tamanho final: 2 bytes)
+[DEBUG] recv: Enviando FIN-ACK (seq=102)
+[DEBUG] recv: Aguardando ACK do FIN enviado
+[DEBUG] recv: ACK do FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 1 bytes)
 [INFO] Nave-Mãe conectada ao rover r1 (IP: 10.0.3.10)
-[DEBUG] send: Iniciando handshake antes de enviar mensagem (missionType=None, idAgent=r1, idMission=000)
-[DEBUG] startConnection: Iniciando handshake com 10.0.3.10:8080 (idAgent=r1, retryLimit=5)
-[DEBUG] startConnection: Enviando SYN para 10.0.3.10:8080 (tentativa 1/5)
-[DEBUG] startConnection: Aguardando SYN-ACK de 10.0.3.10:8080...
-[DEBUG] startConnection: Recebido pacote de 10.0.3.10:8080
-[DEBUG] startConnection: Flag recebido: Z, esperado: Z
-[DEBUG] startConnection: Recebido SYN-ACK válido, enviando ACK
-[DEBUG] startConnection: Handshake concluído com sucesso
-[DEBUG] send: Handshake concluído, iniciando envio de dados
-[DEBUG] send: Mensagem dividida em chunks: str
-[DEBUG] send: Enviando mensagem curta (missionType=None, idMission=000, message_len=10)
-[DEBUG] send: Mensagem enviada, aguardando ACK...
-[DEBUG] send: Recebido pacote de 10.0.3.10:8080
-[DEBUG] send: Verificando ACK - responseIp=10.0.3.10, ip=10.0.3.10, responsePort=8080, port=8080, flag=A, ack=101, seq=101, idMission=000
-[DEBUG] send: ACK válido recebido, enviando FIN
-[DEBUG] send: FIN enviado, aguardando resposta...
-[DEBUG] send: Iniciando handshake antes de enviar mensagem (missionType=T, idAgent=r1, idMission=M-001)
-[DEBUG] startConnection: Iniciando handshake com 10.0.3.10:8080 (idAgent=r1, retryLimit=5)
-[DEBUG] startConnection: Enviando SYN para 10.0.3.10:8080 (tentativa 1/5)
-[DEBUG] startConnection: Aguardando SYN-ACK de 10.0.3.10:8080...
-[DEBUG] startConnection: Recebido pacote de 10.0.3.10:8080
-[DEBUG] startConnection: Flag recebido: Z, esperado: Z
-[DEBUG] startConnection: Recebido SYN-ACK válido, enviando ACK
-[DEBUG] startConnection: Handshake concluído com sucesso
-[DEBUG] send: Handshake concluído, iniciando envio de dados
-[DEBUG] send: Mensagem dividida em chunks: str
-[DEBUG] send: Enviando mensagem curta (missionType=T, idMission=M-001, message_len=162)
-[DEBUG] send: Mensagem enviada, aguardando ACK...
-[DEBUG] send: Recebido pacote de 10.0.3.10:8080
-[DEBUG] send: Verificando ACK - responseIp=10.0.3.10, ip=10.0.3.10, responsePort=8080, port=8080, flag=A, ack=101, seq=101, idMission=M-001
-[DEBUG] send: ACK válido recebido, enviando FIN
-[DEBUG] send: FIN enviado, aguardando resposta...
+[DEBUG] send: Iniciando envio - missionType=None, idAgent=r1, idMission=000, tamanho=10 bytes, destino=10.0.3.10:8080
+[DEBUG] send: Iniciando handshake com 10.0.3.10:8080
+[DEBUG] startConnection: Iniciando handshake com 10.0.3.10:8080, idAgent=r1, retryLimit=5
+[DEBUG] startConnection: Enviando SYN (tentativa 1/5)
+[DEBUG] startConnection: SYN-ACK recebido de 10.0.3.10:8080
+[DEBUG] startConnection: Enviando ACK para completar handshake
+[DEBUG] startConnection: Handshake concluído com sucesso - seq=101
+[DEBUG] send: Handshake concluído - seq=101, ack=101
+[DEBUG] send: Mensagem cabe num único pacote (10 bytes)
+[DEBUG] send: Enviando mensagem completa (seq=101)
+[DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
+[DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
+[DEBUG] send: FIN recebido do outro lado, enviando FIN-ACK (seq=103, ack=102)
+[DEBUG] send: Conexão fechada com sucesso
+[DEBUG] sendMission: Iniciando envio de missão M-001 para rover r1 (10.0.3.10:8080)
+[DEBUG] sendMission: Tamanho da mensagem JSON: 159 bytes
+[DEBUG] sendMission: Tentativa 1/5 - chamando missionLink.send()
+[DEBUG] send: Iniciando envio - missionType=T, idAgent=r1, idMission=M-001, tamanho=159 bytes, destino=10.0.3.10:8080
+[DEBUG] send: Iniciando handshake com 10.0.3.10:8080
+[DEBUG] startConnection: Iniciando handshake com 10.0.3.10:8080, idAgent=r1, retryLimit=5
+[DEBUG] startConnection: Enviando SYN (tentativa 1/5)
+[DEBUG] startConnection: SYN-ACK recebido de 10.0.3.10:8080
+[DEBUG] startConnection: Enviando ACK para completar handshake
+[DEBUG] startConnection: Handshake concluído com sucesso - seq=101
+[DEBUG] send: Handshake concluído - seq=101, ack=101
+[DEBUG] send: Mensagem cabe num único pacote (159 bytes)
+[DEBUG] send: Enviando mensagem completa (seq=101)
+[DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
+[DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
+[DEBUG] send: FIN recebido do outro lado, enviando FIN-ACK (seq=103, ack=102)
+[DEBUG] send: Conexão fechada com sucesso
+[DEBUG] sendMission: missionLink.send() retornou: True
 [INFO] Missão M-001 enviada e confirmada por rover r1
-[DEBUG] recvMissionLink: Aguardando próxima mensagem...
-[DEBUG] recv: Iniciando receção de mensagem (servidor)
-[DEBUG] recv: Chamando acceptConnection()...
+[DEBUG] recv: Iniciando receção - aguardando handshake
 [DEBUG] acceptConnection: Aguardando SYN...
-[DEBUG] acceptConnection: Recebido pacote de 10.0.3.10:8080
-[DEBUG] acceptConnection: SYN válido recebido de 10.0.3.10:8080
-[DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080 (idAgent=r1), enviando SYN-ACK
-[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK...
-[DEBUG] acceptConnection: Verificando ACK - flag=A, idAgent=r1, esperado=r1
-[DEBUG] acceptConnection: ACK válido recebido, handshake concluído
-[DEBUG] recv: Conexão aceite de 10.0.3.10:8080 (idAgent=r1)
-[DEBUG] recvMissionLink: Mensagem recebida: idAgent=r1, idMission=M-001, missionType=N, ip=10.0.3.10
-[DEBUG] recvMissionLink: Aguardando próxima mensagem...
-[DEBUG] recv: Iniciando receção de mensagem (servidor)
-[DEBUG] recv: Chamando acceptConnection()...
-[DEBUG] acceptConnection: Aguardando SYN...
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552672_634615.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563095_863046.json
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552677_645409.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563100_872753.json
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552682_652717.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563105_878117.json
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552687_660367.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563110_883539.json
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552690_661060.json
-[DEBUG] acceptConnection: Timeout ao aguardar SYN (normal)
-[DEBUG] acceptConnection: Recebido pacote de 10.0.3.10:8080
-[DEBUG] acceptConnection: SYN válido recebido de 10.0.3.10:8080
-[DEBUG] acceptConnection: SYN recebido de 10.0.3.10:8080 (idAgent=r1), enviando SYN-ACK
-[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK...
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563115_890388.json
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552692_664248.json
-[DEBUG] acceptConnection: Timeout ao aguardar ACK, reenviando SYN-ACK
-[DEBUG] acceptConnection: Verificando ACK - flag=A, idAgent=r1, esperado=r1
-[DEBUG] acceptConnection: ACK válido recebido, handshake concluído
-[DEBUG] recv: Conexão aceite de 10.0.3.10:8080 (idAgent=r1)
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563120_893207.json
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552697_671640.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563125_895979.json
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552702_674377.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563130_904224.json
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 [INFO] Conexão TelemetryStream estabelecida com 10.0.3.10
-[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765552707_677000.json
+[INFO] Telemetria recebida de r1 (10.0.3.10): telemetry_r1_1765563135_910533.json
 ^C
 
 A encerrar Nave-Mãe...
 Aguardando threads terminarem...
+[DEBUG] acceptConnection: Pacote recebido de 10.0.3.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
 Nave-Mãe encerrada.
 root@NaveMae:/tmp/nms# 
