@@ -288,9 +288,10 @@ class MissionLink:
                     while not synack_received and synack_retries < max_synack_retries:
                         try:
                             with self.sock_lock:
-                                # Timeout reduzido - 1% packet loss não precisa de 3s
+                                # Timeout aumentado para dar mais oportunidade de receber SYN-ACK
+                                # mesmo que acceptConnection() tenha consumido o anterior
                                 original_timeout_inner = self.sock.gettimeout()
-                                self.sock.settimeout(1.0)  # Timeout de 1s para receber SYN-ACK (reduzido de 3s)
+                                self.sock.settimeout(2.0)  # Timeout de 2s para receber SYN-ACK (aumentado para compensar acceptConnection)
                                 try:
                                     message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
                                 finally:
@@ -401,7 +402,8 @@ class MissionLink:
         # NOTA: Usar lock APENAS durante recvfrom() para evitar race conditions
         #       Mas libertar lock imediatamente após receber pacote para dar oportunidade ao startConnection()
         original_timeout = self.sock.gettimeout()
-        self.sock.settimeout(0.5)  # Timeout reduzido de 1s para 0.5s - mais responsivo
+        # Timeout muito curto para não bloquear startConnection() - apenas verificar se há SYN
+        self.sock.settimeout(0.05)  # 50ms - muito curto para não interferir com startConnection()
         
         while True:
             try:
@@ -425,9 +427,11 @@ class MissionLink:
                     break
                 elif flag == self.synackkey:
                     # SYN-ACK é para startConnection(), não para acceptConnection()
-                    print(f"[DEBUG] acceptConnection: SYN-ACK recebido (é para startConnection()), ignorando")
-                    # Delay maior para dar tempo ao startConnection() de receber o próximo SYN-ACK do servidor
-                    time.sleep(1.0)
+                    # PROBLEMA: Já consumimos o pacote do socket, mas startConnection() precisa dele
+                    # SOLUÇÃO: Não fazer nada - o servidor vai reenviar SYN-ACK e startConnection() vai recebê-lo
+                    # Mas para dar mais oportunidade, usar timeout muito curto para não bloquear
+                    print(f"[DEBUG] acceptConnection: SYN-ACK recebido (é para startConnection()), ignorando - servidor vai reenviar")
+                    # Não fazer sleep - deixar startConnection() receber o próximo SYN-ACK rapidamente
                     continue
                 elif flag == self.finkey:
                     # FIN recebido - pode ser de uma conexão anterior que ainda está a fechar
@@ -448,8 +452,8 @@ class MissionLink:
                     print(f"[DEBUG] acceptConnection: Flag desconhecida recebida: {flag}, ignorando")
                     continue
             except socket.timeout:
-                # Timeout é normal - lock já foi libertado, então startConnection() pode receber SYN-ACK
-                time.sleep(0.1)
+                # Timeout é normal e esperado - lock já foi libertado, então startConnection() pode receber SYN-ACK
+                # Não fazer sleep - deixar startConnection() ter oportunidade imediata
                 continue
         
         # Restaurar timeout original
@@ -472,14 +476,17 @@ class MissionLink:
                     message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
                 # Verificar se o pacote veio do cliente correto
                 if recv_ip != ip or recv_port != port:
-                    ack_retries += 1
-                    time.sleep(0.1)
+                    # Pacote de origem diferente - não é para nós, continuar a aguardar
+                    # Não incrementar retries porque pode ser outro cliente
+                    time.sleep(0.01)  # Reduzido para não bloquear
                     continue
                 lista = message.decode().split("|")
                 if len(lista) < 7:
+                    # Mensagem malformada - reenviar SYN-ACK
+                    print(f"[RETRANSMISSÃO] Reenviando SYN-ACK para {ip}:{port} (mensagem malformada)")
                     self.sock.sendto("|".join(prevLista).encode(),(ip,port))
                     ack_retries += 1
-                    time.sleep(0.1)
+                    time.sleep(0.05)  # Reduzido de 0.1s para 0.05s
                     continue
                 if (lista[flagPos] == self.ackkey and 
                 lista[idMissionPos] == idAgent and 
@@ -487,17 +494,26 @@ class MissionLink:
                     print(f"[DEBUG] acceptConnection: ACK recebido, handshake concluído - seq={lista[seqPos]}, ack={lista[ackPos]}")
                     return (ip,port),idAgent,int(lista[seqPos]),int(lista[ackPos])
                 else:
+                    # Pacote recebido mas não é ACK válido - reenviar SYN-ACK
+                    print(f"[RETRANSMISSÃO] Reenviando SYN-ACK para {ip}:{port} (ACK inválido)")
                     self.sock.sendto("|".join(prevLista).encode(),(ip,port))
                     ack_retries += 1
-                    time.sleep(0.1)
+                    time.sleep(0.05)  # Reduzido de 0.1s para 0.05s
+                    continue
             except socket.timeout:
+                # Timeout ao aguardar ACK - reenviar SYN-ACK mais agressivamente
                 print(f"[PACKET LOSS] Timeout ao aguardar ACK do handshake de {ip}:{port} (tentativa {ack_retries+1}/{max_ack_retries})")
                 print(f"[RETRANSMISSÃO] Reenviando SYN-ACK para {ip}:{port}")
                 self.sock.sendto("|".join(prevLista).encode(),(ip,port))
                 ack_retries += 1
+                time.sleep(0.05)  # Reduzido - reenvio mais rápido
+                continue
             except Exception:
+                print(f"[RETRANSMISSÃO] Reenviando SYN-ACK para {ip}:{port} (erro)")
                 self.sock.sendto("|".join(prevLista).encode(),(ip,port))
                 ack_retries += 1
+                time.sleep(0.05)
+                continue
 
         
         
