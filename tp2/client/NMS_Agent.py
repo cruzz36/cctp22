@@ -322,7 +322,6 @@ class NMS_Agent:
         Returns:
             bool: True se o pedido foi enviado com sucesso, False caso contrário
         """
-        print(f"[DEBUG] requestMission: Iniciando solicitação de missão para {ip}:{self.missionLink.port}")
         # Pequeno delay para garantir que a Nave-Mãe está pronta
         time.sleep(0.5)
         
@@ -330,13 +329,10 @@ class NMS_Agent:
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                print(f"[DEBUG] requestMission: Tentativa {attempt + 1}/{max_retries} - chamando missionLink.send()")
                 # Enviar apenas o pedido - a resposta virá através do recvMissionLink()
                 self.missionLink.send(ip, self.missionLink.port, self.missionLink.requestMission, self.id, "000", "request")
-                print(f"[DEBUG] requestMission: Pedido enviado com sucesso")
                 return True
             except TimeoutError as e:
-                print(f"[DEBUG] requestMission: TimeoutError na tentativa {attempt + 1}: {e}")
                 if attempt < max_retries - 1:
                     print(f"[INFO] Tentativa {attempt + 1}/{max_retries} falhou, a tentar novamente...")
                     time.sleep(1)
@@ -345,9 +341,6 @@ class NMS_Agent:
                     print(f"[ERRO] requestMission: Timeout após {max_retries} tentativas: {e}")
                     return False
             except Exception as e:
-                print(f"[DEBUG] requestMission: Exception na tentativa {attempt + 1}: {type(e).__name__}: {e}")
-                import traceback
-                traceback.print_exc()
                 if attempt < max_retries - 1:
                     print(f"[INFO] Tentativa {attempt + 1}/{max_retries} falhou: {e}, a tentar novamente...")
                     time.sleep(1)

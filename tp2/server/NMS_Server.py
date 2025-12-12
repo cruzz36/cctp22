@@ -202,19 +202,12 @@ class NMS_Server:
         Recebe e processa mensagens através do MissionLink.
         Processa registos de agentes, envio de métricas, solicitações de missão e reportes de progresso.
         """
-        print("[DEBUG] recvMissionLink: Thread iniciada, aguardando mensagens de rovers...")
         while True:
             try:
-                print("[DEBUG] recvMissionLink: Aguardando próxima mensagem...")
                 lista = self.missionLink.recv()
-                print(f"[DEBUG] recvMissionLink: Mensagem recebida: idAgent={lista[0]}, idMission={lista[1]}, missionType={lista[2]}, ip={lista[4]}")
             except TimeoutError:
-                print("[DEBUG] recvMissionLink: Timeout ao aguardar mensagem (normal)")
                 continue
-            except Exception as e:
-                print(f"[DEBUG] recvMissionLink: Exception ao receber mensagem: {type(e).__name__}: {e}")
-                import traceback
-                traceback.print_exc()
+            except Exception:
                 continue
 
             idAgent = lista[0]
@@ -224,17 +217,14 @@ class NMS_Server:
             ip = lista[4]
             
             if missionType == self.missionLink.registerAgent:  # "R"
-                print(f"[DEBUG] recvMissionLink: Processando registo de rover (idAgent={idAgent}, ip={ip})")
                 self.registerAgent(idAgent,ip)
                 continue
 
             if missionType == self.missionLink.requestMission:  # "Q"
-                print(f"[DEBUG] recvMissionLink: Processando pedido de missão (idAgent={idAgent}, ip={ip})")
                 self.handleMissionRequest(idAgent, ip)
                 continue
 
             if missionType == self.missionLink.reportProgress:  # "P"
-                print(f"[DEBUG] recvMissionLink: Processando reporte de progresso (idAgent={idAgent}, idMission={idMission}, ip={ip})")
                 self.handleMissionProgress(idAgent, idMission, message, ip)
                 continue
 
