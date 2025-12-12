@@ -196,12 +196,47 @@ class ObservationAPI:
             missions = []
             
             # Missões em self.tasks (podem estar ativas ou na fila)
+            # Lista de missões concluídas para remover de tasks
+            completed_missions_to_remove = []
+            
             for mission_id, mission_data in self.nms_server.tasks.items():
                 mission_info = self._format_mission(mission_id, mission_data)
+                
+                # Verificar adicionalmente se a missão está realmente concluída
+                # Se o rover está "parado" e não há progresso "in_progress", considerar concluída
+                rover_id = mission_info.get("rover_id")
+                if rover_id and mission_info["status"] == "active":
+                    latest_telemetry = self._get_latest_telemetry(rover_id)
+                    if latest_telemetry:
+                        operational_status = latest_telemetry.get("operational_status", "")
+                        # Se o rover está "parado" e não há progresso ativo, a missão foi concluída
+                        if operational_status == "parado":
+                            # Verificar se realmente não há progresso ativo
+                            has_active_progress = False
+                            if mission_id in self.nms_server.missionProgress:
+                                progress = self.nms_server.missionProgress[mission_id]
+                                if isinstance(progress, dict) and rover_id in progress:
+                                    rover_progress = progress[rover_id]
+                                    if isinstance(rover_progress, dict):
+                                        progress_status = rover_progress.get("status", "")
+                                        if progress_status == "in_progress":
+                                            has_active_progress = True
+                            
+                            if not has_active_progress:
+                                # Missão concluída - marcar como completed e remover de tasks
+                                mission_info["status"] = "completed"
+                                completed_missions_to_remove.append(mission_id)
+                
                 # Só mostrar como "active" se realmente estiver em execução
                 # Missões na fila aparecem como "pending"
+                # Se filtro é "active", excluir missões concluídas
                 if status_filter is None or mission_info["status"] == status_filter:
                     missions.append(mission_info)
+            
+            # Remover missões concluídas de tasks para não aparecerem mais como ativas
+            for mission_id in completed_missions_to_remove:
+                if mission_id in self.nms_server.tasks:
+                    del self.nms_server.tasks[mission_id]
             
             # Missões pendentes
             for mission_data in self.nms_server.pendingMissions:
