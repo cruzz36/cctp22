@@ -473,9 +473,9 @@ class NMS_Agent:
                 target_x = current_x + dx * progress
                 target_y = current_y + dy * progress
                 
-                # Mudanças incrementais pequenas
-                step_x = random.choice([-2, -1, 0, 1, 2]) if abs(target_x - prev_x) > 1 else 0
-                step_y = random.choice([-2, -1, 0, 1, 2]) if abs(target_y - prev_y) > 1 else 0
+                # Mudanças incrementais variadas (2 a 5 valores)
+                step_x = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]) if abs(target_x - prev_x) > 1 else 0
+                step_y = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]) if abs(target_y - prev_y) > 1 else 0
                 
                 new_x = prev_x + step_x
                 new_y = prev_y + step_y
@@ -531,16 +531,16 @@ class NMS_Agent:
             target_x = max(x1, min(x2, target_x))
             target_y = max(y1, min(y2, target_y))
             
-            # Atualizar posição com mudanças pequenas (1, 2 ou 0)
+            # Atualizar posição com mudanças variadas (2 a 5 valores)
             if abs(target_x - prev_x) > 0.1:
-                step_x = random.choice([-2, -1, 0, 1, 2])  # Mudança pequena
+                step_x = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])  # Mudança variada
                 new_x = prev_x + step_x
                 new_x = max(x1, min(x2, new_x))  # Garantir dentro dos limites
             else:
                 new_x = prev_x
                 
             if abs(target_y - prev_y) > 0.1:
-                step_y = random.choice([-2, -1, 0, 1, 2])  # Mudança pequena
+                step_y = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])  # Mudança variada
                 new_y = prev_y + step_y
                 new_y = max(y1, min(y2, new_y))  # Garantir dentro dos limites
             else:

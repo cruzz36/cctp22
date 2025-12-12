@@ -393,9 +393,8 @@ class NMS_Server:
         if not mission_files:
             return
         
-        # Enviar apenas a primeira missão disponível para este rover
-        # As outras missões serão enviadas quando o rover solicitar ou quando a atual for concluída
-        first_mission_sent = False
+        # Coletar todas as missões válidas para este rover primeiro
+        valid_missions = []
         
         for mission_file in sorted(mission_files):  # Ordenar para garantir ordem consistente
             try:
@@ -437,24 +436,35 @@ class NMS_Server:
                     if already_in_queue:
                         continue  # Já está na fila, pular
                     
-                    if not first_mission_sent:
-                        # Enviar apenas a primeira missão encontrada
-                        rover_ip = self.agents.get(rover_id)
-                        if rover_ip:
-                            try:
-                                success = self.sendMission(rover_ip, rover_id, mission_data)
-                                if success:
-                                    first_mission_sent = True
-                                    continue  # Pular para próxima iteração
-                            except Exception:
-                                pass
-                    
-                    # Adicionar missões restantes à fila de pendentes
-                    # (adicionar todas as missões que não foram enviadas)
-                    self.pendingMissions.append(mission_data)
+                    # Adicionar à lista de missões válidas
+                    valid_missions.append(mission_data)
                         
             except Exception:
                 pass
+        
+        # Ordenar missões por mission_id para garantir ordem correta
+        valid_missions.sort(key=lambda m: m.get("mission_id", ""))
+        
+        # Enviar apenas a primeira missão disponível para este rover
+        # As outras missões serão enviadas quando o rover solicitar ou quando a atual for concluída
+        first_mission_sent = False
+        
+        for mission_data in valid_missions:
+            if not first_mission_sent:
+                # Enviar apenas a primeira missão encontrada
+                rover_ip = self.agents.get(rover_id)
+                if rover_ip:
+                    try:
+                        success = self.sendMission(rover_ip, rover_id, mission_data)
+                        if success:
+                            first_mission_sent = True
+                            continue  # Pular para próxima iteração
+                    except Exception:
+                        pass
+            
+            # Adicionar missões restantes à fila de pendentes
+            # (adicionar todas as missões que não foram enviadas)
+            self.pendingMissions.append(mission_data)
 
 
     def parseConfig(self,filename):
@@ -586,19 +596,10 @@ class NMS_Server:
                 mission_to_send = self.pendingMissions.pop(i)
                 break
         
-        # Se não encontrou missão específica, procurar qualquer missão pendente
-        if mission_to_send is None and self.pendingMissions:
-            mission_to_send = self.pendingMissions.pop(0)
-        
-        if mission_to_send:
-            try:
-                success = self.sendMission(ip, idAgent, mission_to_send)
-                if not success:
-                    self.pendingMissions.insert(0, mission_to_send)
-            except Exception:
-                self.pendingMissions.insert(0, mission_to_send)
-        else:
-            # Se não há missões pendentes, verificar se há mais missões no serverDB para este rover
+        # NÃO enviar missões de outros rovers - apenas missões específicas para este rover
+        # Se não encontrou missão específica, verificar se há mais missões no serverDB para este rover
+        if mission_to_send is None:
+            # Se não há missões pendentes específicas, verificar se há mais missões no serverDB para este rover
             self._loadMissionsForRover(idAgent)
             
             # Tentar novamente após carregar
@@ -615,9 +616,6 @@ class NMS_Server:
                         mission_to_send = self.pendingMissions.pop(i)
                         break
                 
-                if mission_to_send is None and self.pendingMissions:
-                    mission_to_send = self.pendingMissions.pop(0)
-                
                 if mission_to_send:
                     try:
                         success = self.sendMission(ip, idAgent, mission_to_send)
@@ -629,6 +627,14 @@ class NMS_Server:
                     self.missionLink.send(ip, self.missionLink.port, None, idAgent, "000", "no_mission")
             else:
                 self.missionLink.send(ip, self.missionLink.port, None, idAgent, "000", "no_mission")
+        else:
+            # Missão específica encontrada - enviar
+            try:
+                success = self.sendMission(ip, idAgent, mission_to_send)
+                if not success:
+                    self.pendingMissions.insert(0, mission_to_send)
+            except Exception:
+                self.pendingMissions.insert(0, mission_to_send)
 
     def handleMissionProgress(self, idAgent, idMission, progress_json, ip):
         """
