@@ -322,8 +322,8 @@ class NMS_Agent:
         Returns:
             bool: True se o pedido foi enviado com sucesso, False caso contrário
         """
-        # Pequeno delay para garantir que a Nave-Mãe está pronta
-        time.sleep(0.5)
+        # Delay maior para garantir que a Nave-Mãe está pronta e evitar conflitos
+        time.sleep(1.0)
         
         # Enviar solicitação de missão com retry
         max_retries = 3
@@ -335,7 +335,7 @@ class NMS_Agent:
             except TimeoutError as e:
                 if attempt < max_retries - 1:
                     print(f"[INFO] Tentativa {attempt + 1}/{max_retries} falhou, a tentar novamente...")
-                    time.sleep(1)
+                    time.sleep(2)  # Delay maior entre tentativas
                     continue
                 else:
                     print(f"[ERRO] requestMission: Timeout após {max_retries} tentativas: {e}")
@@ -343,7 +343,7 @@ class NMS_Agent:
             except Exception as e:
                 if attempt < max_retries - 1:
                     print(f"[INFO] Tentativa {attempt + 1}/{max_retries} falhou: {e}, a tentar novamente...")
-                    time.sleep(1)
+                    time.sleep(2)  # Delay maior entre tentativas
                     continue
                 else:
                     print(f"[ERRO] requestMission: Erro ao solicitar missão após {max_retries} tentativas: {e}")
@@ -447,7 +447,7 @@ class NMS_Agent:
         center_y = (y1 + y2) / 2.0
         
         # Estado inicial: mover para a área da missão
-        # Ficar "a caminho" apenas por 1-3 mensagens de telemetria (5-15 segundos)
+        # Ficar "a caminho" até entrar nas coordenadas da missão (máximo 1-3 mensagens de telemetria)
         self.updateOperationalStatus("a caminho")
         self.updateVelocity(5.0)  # 5 m/s
         
@@ -463,18 +463,26 @@ class NMS_Agent:
             direction_deg = math.degrees(direction_rad)
             self.updateDirection(direction_deg)
         
-        # Ficar "a caminho" apenas por 1-3 mensagens de telemetria (telemetria a cada 5s)
+        # Função auxiliar para verificar se está dentro da área da missão
+        def is_inside_area(x, y):
+            return x1 <= x <= x2 and y1 <= y <= y2
+        
+        # Verificar se já está dentro da área
+        already_inside = is_inside_area(current_x, current_y)
+        
+        # Ficar "a caminho" até entrar na área (máximo 1-3 mensagens de telemetria)
         num_telemetry_updates_en_route = random.randint(1, 3)
         prev_x = current_x
         prev_y = current_y
+        telemetry_count = 0
         
-        # Fase "a caminho" - apenas 1-3 iterações de 5 segundos cada
-        for telemetry_idx in range(num_telemetry_updates_en_route):
+        # Fase "a caminho" - mover até entrar na área ou atingir máximo de mensagens
+        while not already_inside and telemetry_count < num_telemetry_updates_en_route:
             if distance > 0.1:
-                # Mover gradualmente em direção ao centro durante esta iteração
-                progress = (telemetry_idx + 1) / max(3, num_telemetry_updates_en_route)
-                target_x = current_x + dx * min(progress, 0.8)  # Não chegar completamente ao destino ainda
-                target_y = current_y + dy * min(progress, 0.8)
+                # Mover gradualmente em direção ao centro
+                progress = min(1.0, (telemetry_count + 1) / max(3, num_telemetry_updates_en_route))
+                target_x = current_x + dx * progress
+                target_y = current_y + dy * progress
                 
                 # Mudanças incrementais variadas (2 a 5 valores)
                 step_x = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]) if abs(target_x - prev_x) > 1 else 0
@@ -488,28 +496,39 @@ class NMS_Agent:
                     new_x = prev_x
                 if (dy > 0 and new_y > target_y) or (dy < 0 and new_y < target_y):
                     new_y = prev_y
+                
+                # Garantir que entra na área se possível
+                if not is_inside_area(new_x, new_y):
+                    # Ajustar para entrar na área
+                    if new_x < x1:
+                        new_x = min(x1, prev_x + 5)
+                    elif new_x > x2:
+                        new_x = max(x2, prev_x - 5)
+                    if new_y < y1:
+                        new_y = min(y1, prev_y + 5)
+                    elif new_y > y2:
+                        new_y = max(y2, prev_y - 5)
                     
                 self.updatePosition(new_x, new_y, 0.0)
                 prev_x = new_x
                 prev_y = new_y
+                
+                # Verificar se entrou na área
+                already_inside = is_inside_area(new_x, new_y)
+            
+            telemetry_count += 1
             
             # Aguardar intervalo de telemetria (5 segundos) para enviar mensagens
-            if telemetry_idx < num_telemetry_updates_en_route - 1:
+            if not already_inside and telemetry_count < num_telemetry_updates_en_route:
                 time.sleep(5.0)  # Intervalo de telemetria
         
-        # Mudar para "em missão" após 1-3 mensagens de telemetria
-        self.updateOperationalStatus("em missão")
-        self.updateVelocity(2.0)  # Velocidade reduzida durante execução
-        
-        # Continuar movimento até à área da missão (movimento rápido sem delays grandes)
-        steps_to_area = int(distance / 2.0) + 1
-        remaining_progress = 1.0 - min(0.8, num_telemetry_updates_en_route / max(3, num_telemetry_updates_en_route))
-        
-        if remaining_progress > 0 and distance > 0.1:
-            for step in range(int(steps_to_area * remaining_progress)):
-                progress = 0.8 + (step + 1) / (steps_to_area * remaining_progress) * 0.2
-                target_x = current_x + dx * progress
-                target_y = current_y + dy * progress
+        # Se ainda não está dentro, continuar movimento até entrar
+        while not already_inside:
+            if distance > 0.1:
+                # Mover diretamente para dentro da área
+                # Calcular ponto dentro da área mais próximo
+                target_x = max(x1, min(x2, prev_x + (center_x - prev_x) * 0.3))
+                target_y = max(y1, min(y2, prev_y + (center_y - prev_y) * 0.3))
                 
                 step_x = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]) if abs(target_x - prev_x) > 1 else 0
                 step_y = random.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]) if abs(target_y - prev_y) > 1 else 0
@@ -517,15 +536,32 @@ class NMS_Agent:
                 new_x = prev_x + step_x
                 new_y = prev_y + step_y
                 
-                if (dx > 0 and new_x > target_x) or (dx < 0 and new_x < target_x):
-                    new_x = prev_x
-                if (dy > 0 and new_y > target_y) or (dy < 0 and new_y < target_y):
-                    new_y = prev_y
-                    
+                # Garantir que entra na área
+                if new_x < x1:
+                    new_x = x1 + random.randint(0, 5)
+                elif new_x > x2:
+                    new_x = x2 - random.randint(0, 5)
+                if new_y < y1:
+                    new_y = y1 + random.randint(0, 5)
+                elif new_y > y2:
+                    new_y = y2 - random.randint(0, 5)
+                
+                # Garantir que está dentro
+                new_x = max(x1, min(x2, new_x))
+                new_y = max(y1, min(y2, new_y))
+                
                 self.updatePosition(new_x, new_y, 0.0)
                 prev_x = new_x
                 prev_y = new_y
-                time.sleep(0.5)  # Pequeno delay para simular movimento
+                
+                # Verificar se entrou na área
+                already_inside = is_inside_area(new_x, new_y)
+            
+            time.sleep(0.5)  # Pequeno delay para simular movimento
+        
+        # Mudar para "em missão" apenas quando já está dentro das coordenadas
+        self.updateOperationalStatus("em missão")
+        self.updateVelocity(2.0)  # Velocidade reduzida durante execução
         
         # Calcular duração total em segundos
         total_duration_seconds = float(duration_minutes) * 60.0
@@ -617,6 +653,8 @@ class NMS_Agent:
         self.createAndSendTelemetry(server_ip)
         
         # Reportar progresso de conclusão da missão ao servidor (com retry)
+        # Pequeno delay antes de reportar para evitar conflitos com outras operações
+        time.sleep(0.5)
         max_retries = 3
         progress_reported = False
         for retry in range(max_retries):
@@ -638,7 +676,7 @@ class NMS_Agent:
             except Exception as e:
                 if retry < max_retries - 1:
                     print(f"[INFO] Tentativa {retry + 1}/{max_retries} de reportar conclusão falhou, a tentar novamente...")
-                    time.sleep(1)
+                    time.sleep(2)  # Delay maior entre tentativas
                 else:
                     print(f"[ERRO] Erro ao reportar conclusão da missão após {max_retries} tentativas: {e}")
         

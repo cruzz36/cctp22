@@ -277,44 +277,72 @@ class MissionLink:
                 )
                 try:
                     # Aguardar um pouco antes de receber para dar tempo ao servidor enviar SYN-ACK
-                    time.sleep(0.2)
+                    time.sleep(0.3)
                     # Usar lock para evitar que acceptConnection() consuma o SYN-ACK
-                    with self.sock_lock:
-                        # Timeout curto para não bloquear muito tempo
-                        original_timeout_inner = self.sock.gettimeout()
-                        self.sock.settimeout(2.0)  # Timeout de 2s para receber SYN-ACK
+                    synack_received = False
+                    synack_retries = 0
+                    max_synack_retries = 10  # Aguardar até 10 tentativas de receber SYN-ACK
+                    
+                    while not synack_received and synack_retries < max_synack_retries:
                         try:
-                            message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
-                        finally:
-                            self.sock.settimeout(original_timeout_inner)
-                    lista = message.decode().split("|")
-                    if len(lista) < 7:
-                        retries += 1
-                        continue
-                    # Verificar se o pacote veio do destino correto
-                    if recv_ip != destAddress or recv_port != destPort:
-                        continue  # Continuar a aguardar sem incrementar retries
-                    # Continuar a aguardar SYN-ACK até receber um válido
-                    while lista[flagPos] != self.synackkey:
-                        # Reenviar SYN periodicamente mas continuar a aguardar
-                        self.sock.sendto(
-                            f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
-                            (destAddress, destPort)
-                        )
-                        try:
-                            # Usar lock para evitar que acceptConnection() consuma o SYN-ACK
                             with self.sock_lock:
-                                message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
+                                # Timeout aumentado para dar mais tempo ao servidor responder
+                                original_timeout_inner = self.sock.gettimeout()
+                                self.sock.settimeout(3.0)  # Timeout de 3s para receber SYN-ACK
+                                try:
+                                    message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
+                                finally:
+                                    self.sock.settimeout(original_timeout_inner)
+                            
                             lista = message.decode().split("|")
                             if len(lista) < 7:
+                                synack_retries += 1
+                                # Reenviar SYN se não recebeu resposta válida
+                                if synack_retries % 3 == 0:  # Reenviar a cada 3 tentativas
+                                    self.sock.sendto(
+                                        f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
+                                        (destAddress, destPort)
+                                    )
+                                time.sleep(0.5)
                                 continue
+                            
                             # Verificar se o pacote veio do destino correto
                             if recv_ip != destAddress or recv_port != destPort:
-                                continue  # Continuar a aguardar sem reenviar SYN
+                                synack_retries += 1
+                                time.sleep(0.2)
+                                continue  # Continuar a aguardar sem incrementar retries principais
+                            
+                            # Verificar se recebeu SYN-ACK válido
+                            if lista[flagPos] == self.synackkey:
+                                synack_received = True
+                                break
+                            else:
+                                # Recebeu outro tipo de pacote, continuar a aguardar
+                                synack_retries += 1
+                                time.sleep(0.2)
+                                continue
+                                
                         except socket.timeout:
+                            synack_retries += 1
+                            # Reenviar SYN periodicamente
+                            if synack_retries % 2 == 0:  # Reenviar a cada 2 timeouts
+                                self.sock.sendto(
+                                    f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
+                                    (destAddress, destPort)
+                                )
+                            time.sleep(0.3)
                             continue
                         except Exception:
+                            synack_retries += 1
+                            time.sleep(0.3)
                             continue
+                    
+                    # Se não recebeu SYN-ACK após múltiplas tentativas, incrementar retry principal
+                    if not synack_received:
+                        retries += 1
+                        if retries >= retryLimit:
+                            break
+                        continue
 
                 except socket.timeout:
                     retries += 1
@@ -403,15 +431,23 @@ class MissionLink:
         prevLista = lista.copy()
         self.sock.sendto("|".join(lista).encode(),(ip,port))
         # RECEBER ACK
-        while True:
+        ack_retries = 0
+        max_ack_retries = 10
+        while ack_retries < max_ack_retries:
             try:
-                message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
+                # Usar lock para evitar race conditions
+                with self.sock_lock:
+                    message, (recv_ip, recv_port) = self.sock.recvfrom(self.limit.buffersize)
                 # Verificar se o pacote veio do cliente correto
                 if recv_ip != ip or recv_port != port:
+                    ack_retries += 1
+                    time.sleep(0.1)
                     continue
                 lista = message.decode().split("|")
                 if len(lista) < 7:
                     self.sock.sendto("|".join(prevLista).encode(),(ip,port))
+                    ack_retries += 1
+                    time.sleep(0.1)
                     continue
                 if (lista[flagPos] == self.ackkey and 
                 lista[idMissionPos] == idAgent and 
@@ -419,10 +455,14 @@ class MissionLink:
                     return (ip,port),idAgent,int(lista[seqPos]),int(lista[ackPos])
                 else:
                     self.sock.sendto("|".join(prevLista).encode(),(ip,port))
+                    ack_retries += 1
+                    time.sleep(0.1)
             except socket.timeout:
                 self.sock.sendto("|".join(prevLista).encode(),(ip,port))
+                ack_retries += 1
             except Exception:
                 self.sock.sendto("|".join(prevLista).encode(),(ip,port))
+                ack_retries += 1
 
         
         
