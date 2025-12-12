@@ -571,6 +571,23 @@ class NMS_Agent:
         # Enviar telemetria final antes de concluir missão
         self.createAndSendTelemetry(server_ip)
         
+        # Reportar progresso de conclusão da missão ao servidor
+        try:
+            progress_data = {
+                "mission_id": mission_id,
+                "status": "completed",
+                "progress_percent": 100,
+                "current_position": {
+                    "x": self.position["x"],
+                    "y": self.position["y"],
+                    "z": self.position["z"]
+                }
+            }
+            progress_json = json.dumps(progress_data)
+            self.missionLink.send(server_ip, self.missionLink.port, self.missionLink.reportProgress, self.id, mission_id, progress_json)
+        except Exception as e:
+            print(f"[ERRO] Erro ao reportar conclusão da missão: {e}")
+        
         # Atualizar estado para "parado"
         self.updateOperationalStatus("parado")
         self.updateVelocity(0.0)

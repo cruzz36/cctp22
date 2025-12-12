@@ -492,7 +492,9 @@ class ObservationAPI:
             str or None: ID da missão atual ou None se não houver
         """
         # Procurar missão ativa em tasks para este rover
-        # Verificar primeiro se há missão em tasks que não está concluída
+        # Coletar todas as missões válidas primeiro e ordenar por mission_id (mais recente primeiro)
+        valid_missions = []
+        
         for mission_id, mission_data in self.nms_server.tasks.items():
             if isinstance(mission_data, str):
                 try:
@@ -512,18 +514,25 @@ class ObservationAPI:
                             if status == "completed":
                                 is_completed = True
                 
-                # Se não está concluída, verificar telemetria para confirmar
+                # Se não está concluída, adicionar à lista de candidatas
                 if not is_completed:
-                    latest_telemetry = self._get_latest_telemetry(rover_id)
-                    if latest_telemetry:
-                        operational_status = latest_telemetry.get("operational_status", "")
-                        # Se está "em missão" ou "a caminho", está a executar esta missão
-                        if operational_status in ["em missão", "a caminho"]:
-                            return mission_id
-                    else:
-                        # Se não há telemetria mas a missão está em tasks e não está concluída,
-                        # assumir que está ativa
-                        return mission_id
+                    valid_missions.append((mission_id, mission_data))
+        
+        # Ordenar por mission_id (ordem decrescente para pegar a mais recente)
+        valid_missions.sort(key=lambda x: x[0], reverse=True)
+        
+        # Verificar telemetria para confirmar qual missão está realmente em execução
+        latest_telemetry = self._get_latest_telemetry(rover_id)
+        if latest_telemetry:
+            operational_status = latest_telemetry.get("operational_status", "")
+            # Se está "em missão" ou "a caminho", retornar a missão mais recente
+            if operational_status in ["em missão", "a caminho"]:
+                if valid_missions:
+                    return valid_missions[0][0]  # Retornar a missão mais recente
+        else:
+            # Se não há telemetria mas há missões válidas, retornar a mais recente
+            if valid_missions:
+                return valid_missions[0][0]
         
         return None
     

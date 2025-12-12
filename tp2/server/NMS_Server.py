@@ -648,6 +648,13 @@ class NMS_Server:
                 self.missionProgress[idMission] = {}
             self.missionProgress[idMission][idAgent] = progress_data
             
+            # Se a missão foi concluída, remover de tasks imediatamente
+            if isinstance(progress_data, dict):
+                status = progress_data.get("status", "")
+                if status == "completed":
+                    if idMission in self.tasks:
+                        del self.tasks[idMission]
+            
             # Enviar confirmação
             self.missionLink.send(ip, self.missionLink.port, None, idAgent, idMission, "progress_received")
             
