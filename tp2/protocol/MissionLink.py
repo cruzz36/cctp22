@@ -324,8 +324,10 @@ class MissionLink:
                                 
                         except socket.timeout:
                             synack_retries += 1
+                            print(f"[PACKET LOSS] Timeout ao aguardar SYN-ACK de {destAddress}:{destPort} (tentativa {synack_retries}/{max_synack_retries})")
                             # Reenviar SYN periodicamente
                             if synack_retries % 2 == 0:  # Reenviar a cada 2 timeouts
+                                print(f"[RETRANSMISSÃO] Reenviando SYN para {destAddress}:{destPort}")
                                 self.sock.sendto(
                                     f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
                                     (destAddress, destPort)
@@ -458,6 +460,8 @@ class MissionLink:
                     ack_retries += 1
                     time.sleep(0.1)
             except socket.timeout:
+                print(f"[PACKET LOSS] Timeout ao aguardar ACK do handshake de {ip}:{port} (tentativa {ack_retries+1}/{max_ack_retries})")
+                print(f"[RETRANSMISSÃO] Reenviando SYN-ACK para {ip}:{port}")
                 self.sock.sendto("|".join(prevLista).encode(),(ip,port))
                 ack_retries += 1
             except Exception:
@@ -514,6 +518,8 @@ class MissionLink:
                         break
                 except socket.timeout:
                     # Timeout ao aguardar ACK - retransmitir nome do ficheiro
+                    print(f"[PACKET LOSS] Timeout ao aguardar ACK do nome do ficheiro de {ip}:{port}")
+                    print(f"[RETRANSMISSÃO] Reenviando nome do ficheiro para {ip}:{port}")
                     continue
                 except Exception as e:
                     print(f"Erro ao aguardar ACK do nome do ficheiro: {e}")
@@ -545,6 +551,8 @@ class MissionLink:
                             buffer = file.read(self.limit.buffersize - self.getHeaderSize())
                     except socket.timeout:
                         # Retransmitir chunk em caso de timeout
+                        print(f"[PACKET LOSS] Timeout ao aguardar ACK do chunk {i} de {ip}:{port}")
+                        print(f"[RETRANSMISSÃO] Reenviando chunk {i} para {ip}:{port}")
                         self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,buffer),(ip,port))
                         continue
             # Incrementar seq antes de enviar FIN para garantir número de sequência diferente
@@ -571,6 +579,8 @@ class MissionLink:
                         self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
                         return True
                 except socket.timeout:
+                    print(f"[PACKET LOSS] Timeout ao aguardar FIN-ACK de {ip}:{port} (ficheiro)")
+                    print(f"[RETRANSMISSÃO] Reenviando FIN para {ip}:{port}")
                     self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                     
 
@@ -636,6 +646,8 @@ class MissionLink:
                                             continue
                                 except socket.timeout:
                                     # Reenvia FIN se timeout (pode ser que o outro lado ainda não recebeu)
+                                    print(f"[PACKET LOSS] Timeout ao aguardar FIN/ACK de {ip}:{port}")
+                                    print(f"[RETRANSMISSÃO] Reenviando FIN para {ip}:{port}")
                                     self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                                     continue
                                 except Exception as e:
@@ -646,11 +658,14 @@ class MissionLink:
                         continue
                     except socket.timeout:
                         # Timeout ao aguardar ACK - retransmitir mensagem
+                        print(f"[PACKET LOSS] Timeout ao aguardar ACK da mensagem de {ip}:{port}")
+                        print(f"[RETRANSMISSÃO] Reenviando mensagem para {ip}:{port}")
                         self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks),(ip,port))
                         continue
                     except Exception as e:
                         print(f"Erro ao aguardar ACK: {e}")
                         # Retransmitir mensagem
+                        print(f"[RETRANSMISSÃO] Reenviando mensagem após erro para {ip}:{port}")
                         self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks),(ip,port))
                         continue
             # In case the message is big enough, 
@@ -675,11 +690,14 @@ class MissionLink:
                         continue
                 except socket.timeout:
                     # Timeout ao aguardar ACK - retransmitir chunk
+                    print(f"[PACKET LOSS] Timeout ao aguardar ACK do chunk {i+1}/{len(chunks)} de {ip}:{port}")
+                    print(f"[RETRANSMISSÃO] Reenviando chunk {i+1}/{len(chunks)} para {ip}:{port}")
                     self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks[i]),(ip,port))
                     continue
                 except Exception as e:
                     print(f"Erro ao receber ACK do chunk: {e}")
                     # Retransmitir chunk
+                    print(f"[RETRANSMISSÃO] Reenviando chunk {i+1}/{len(chunks)} após erro para {ip}:{port}")
                     self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks[i]),(ip,port))
                     continue
             self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
@@ -706,6 +724,8 @@ class MissionLink:
                 #          durante a troca de FIN não serão tratados, causando exceções não tratadas
                 #          e falhas de conexão em vez de retransmitir o pacote FIN
                 except socket.timeout:
+                    print(f"[PACKET LOSS] Timeout ao aguardar FIN-ACK de {ip}:{port} (mensagem longa)")
+                    print(f"[RETRANSMISSÃO] Reenviando FIN para {ip}:{port}")
                     self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                     
                 
@@ -887,6 +907,8 @@ class MissionLink:
                                         return [idAgent,idMission,missionType,message,ip]
                                 except socket.timeout:
                                     # Reenvia FIN se não receber ACK
+                                    print(f"[PACKET LOSS] Timeout ao aguardar ACK do FIN de {ip}:{port} (recv)")
+                                    print(f"[RETRANSMISSÃO] Reenviando FIN para {ip}:{port}")
                                     self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                                     continue
                                 except Exception as e:
@@ -908,11 +930,14 @@ class MissionLink:
                 # So, to make sure, we sent the previous message that was supposed to be sent
                 except socket.timeout:
                     # Reenviar último ACK para solicitar retransmissão
+                    print(f"[PACKET LOSS] Timeout ao aguardar próximo chunk de {ip}:{port}")
+                    print(f"[RETRANSMISSÃO] Reenviando último ACK para solicitar retransmissão para {ip}:{port}")
                     self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
                     continue
                 except Exception as e:
                     print(f"Erro ao receber chunk: {e}")
                     # Reenviar último ACK
+                    print(f"[RETRANSMISSÃO] Reenviando último ACK após erro para {ip}:{port}")
                     self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
                     continue
 
@@ -975,11 +1000,14 @@ class MissionLink:
                                             return [idAgent,idMission,missionType,fileName,ip]
                                     except socket.timeout:
                                         # Reenviar FIN se timeout
+                                        print(f"[PACKET LOSS] Timeout ao aguardar confirmação FIN de {ip}:{port} (ficheiro)")
+                                        print(f"[RETRANSMISSÃO] Reenviando FIN para {ip}:{port}")
                                         self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                                         continue
                                     except Exception as e:
                                         print(f"Erro ao aguardar confirmação FIN: {e}")
                                         # Reenviar FIN
+                                        print(f"[RETRANSMISSÃO] Reenviando FIN após erro para {ip}:{port}")
                                         self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                                         continue
                             else:
@@ -990,11 +1018,14 @@ class MissionLink:
 
                     except socket.timeout:
                         # Reenviar último ACK para solicitar retransmissão
+                        print(f"[PACKET LOSS] Timeout ao aguardar próximo chunk de ficheiro de {ip}:{port}")
+                        print(f"[RETRANSMISSÃO] Reenviando último ACK para solicitar retransmissão para {ip}:{port}")
                         self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
                         continue
                     except Exception as e:
                         print(f"Erro ao receber chunk de ficheiro: {e}")
                         # Reenviar último ACK
+                        print(f"[RETRANSMISSÃO] Reenviando último ACK após erro para {ip}:{port}")
                         self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
                         continue
 
