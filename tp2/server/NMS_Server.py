@@ -310,12 +310,16 @@ class NMS_Server:
         # Enviar missão via MissionLink
         # O método send() já aguarda confirmação internamente e retorna True se bem-sucedido
         # Não devemos chamar recv() aqui porque estabeleceria uma nova conexão e poderia receber outras mensagens
+        print(f"[DEBUG] sendMission: Iniciando envio de missão {mission_id} para rover {idAgent} ({ip}:{self.missionLink.port})")
+        print(f"[DEBUG] sendMission: Tamanho da mensagem JSON: {len(mission_json)} bytes")
         retries = 0
         max_retries = 5
         
         while retries < max_retries:
             try:
+                print(f"[DEBUG] sendMission: Tentativa {retries + 1}/{max_retries} - chamando missionLink.send()")
                 success = self.missionLink.send(ip, self.missionLink.port, self.missionLink.taskRequest, idAgent, mission_id, mission_json)
+                print(f"[DEBUG] sendMission: missionLink.send() retornou: {success}")
                 if success:
                     # Missão enviada com sucesso - armazenar em tasks
                     if isinstance(mission_data, dict):

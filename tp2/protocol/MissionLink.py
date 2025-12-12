@@ -267,10 +267,12 @@ class MissionLink:
         """
         seqinicial = 100
         retries = 0
+        print(f"[DEBUG] startConnection: Iniciando handshake com {destAddress}:{destPort}, idAgent={idAgent}, retryLimit={retryLimit}")
         
         while retries < retryLimit:
             try:
                 # Send SYN - no handshake, idMission contém o ID do rover
+                print(f"[DEBUG] startConnection: Enviando SYN (tentativa {retries + 1}/{retryLimit})")
                 self.sock.sendto(
                     f"{self.synkey}|{idAgent}|{seqinicial}|0|_|0|-.-".encode(),
                     (destAddress, destPort)
@@ -314,6 +316,7 @@ class MissionLink:
                             
                             # Verificar se recebeu SYN-ACK válido
                             if lista[flagPos] == self.synackkey:
+                                print(f"[DEBUG] startConnection: SYN-ACK recebido de {destAddress}:{destPort}")
                                 synack_received = True
                                 break
                             else:
@@ -358,10 +361,12 @@ class MissionLink:
                     continue
 
                 # Send ACK
+                print(f"[DEBUG] startConnection: Enviando ACK para completar handshake")
                 self.sock.sendto(
                     f"{self.ackkey}|{idAgent}|{seqinicial}|{seqinicial}|_|0|-.-".encode(),
                     (destAddress, destPort)
                 )
+                print(f"[DEBUG] startConnection: Handshake concluído com sucesso - seq={seqinicial + 1}")
                 return  (destAddress,destPort),idAgent,seqinicial + 1,seqinicial + 1 # Handshake successful
 
             
@@ -391,6 +396,7 @@ class MissionLink:
                 - seq (int): Número de sequência inicial
                 - ack (int): Número de acknowledgment inicial (igual a seq)
         """
+        print(f"[DEBUG] acceptConnection: Aguardando SYN...")
         # RECEBER O SYN
         # NOTA: Usar lock APENAS durante recvfrom() para evitar race conditions
         #       Mas libertar lock imediatamente após receber pacote para dar oportunidade ao startConnection()
@@ -403,17 +409,23 @@ class MissionLink:
                 with self.sock_lock:
                     message,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
                 # Lock libertado aqui - startConnection() pode agora receber pacotes
+                print(f"[DEBUG] acceptConnection: Pacote recebido de {ip}:{port}")
                 
                 lista = message.decode().split("|")
                 if len(lista) < 7:
+                    print(f"[DEBUG] acceptConnection: Mensagem malformada (apenas {len(lista)} campos), ignorando")
                     continue
                 flag = lista[flagPos]
+                print(f"[DEBUG] acceptConnection: Flag recebida: {flag}")
                 if flag == self.synkey:
+                    print(f"[DEBUG] acceptConnection: SYN recebido de {ip}:{port}, idAgent={lista[idMissionPos]}")
                     # Restaurar timeout original antes de continuar
                     self.sock.settimeout(original_timeout)
+                    print(f"[DEBUG] acceptConnection: SYN válido processado")
                     break
                 elif flag == self.synackkey:
                     # SYN-ACK é para startConnection(), não para acceptConnection()
+                    print(f"[DEBUG] acceptConnection: SYN-ACK recebido (é para startConnection()), ignorando")
                     # Delay maior para dar tempo ao startConnection() de receber o próximo SYN-ACK do servidor
                     time.sleep(1.0)
                     continue
@@ -428,10 +440,12 @@ class MissionLink:
         self.sock.settimeout(original_timeout)
         # No handshake, idMission contém o ID do rover
         idAgent = lista[idMissionPos]
+        print(f"[DEBUG] acceptConnection: Enviando SYN-ACK para {ip}:{port}, idAgent={idAgent}")
         # ENVIAR SYNACK 
         lista[flagPos] = self.synackkey
         prevLista = lista.copy()
         self.sock.sendto("|".join(lista).encode(),(ip,port))
+        print(f"[DEBUG] acceptConnection: SYN-ACK enviado, aguardando ACK")
         # RECEBER ACK
         ack_retries = 0
         max_ack_retries = 10
@@ -454,6 +468,7 @@ class MissionLink:
                 if (lista[flagPos] == self.ackkey and 
                 lista[idMissionPos] == idAgent and 
                 lista[ackPos] == lista[seqPos]):
+                    print(f"[DEBUG] acceptConnection: ACK recebido, handshake concluído - seq={lista[seqPos]}, ack={lista[ackPos]}")
                     return (ip,port),idAgent,int(lista[seqPos]),int(lista[ackPos])
                 else:
                     self.sock.sendto("|".join(prevLista).encode(),(ip,port))
@@ -490,13 +505,19 @@ class MissionLink:
         if not isinstance(message, str):
             message = str(message)
         
+        print(f"[DEBUG] send: Iniciando envio - missionType={missionType}, idAgent={idAgent}, idMission={idMission}, tamanho={len(message)} bytes, destino={ip}:{port}")
+        
         # The connection starts with an handshake to assure it has a somewhat reliable 
         # transfers between the client and the server 
+        print(f"[DEBUG] send: Iniciando handshake com {ip}:{port}")
         _,idAgent,seq,ack = self.startConnection(idAgent,ip,port)
+        print(f"[DEBUG] send: Handshake concluído - seq={seq}, ack={ack}")
 
         if message.endswith(".json"):
             # First cycle is to send the filename
+            print(f"[DEBUG] send: Enviando ficheiro: {message}")
             while True:
+                print(f"[DEBUG] send: Enviando nome do ficheiro (seq={seq})")
                 self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,message),(ip,port))
                 try:
                     text,(responseIp,responsePort) = self.sock.recvfrom(self.limit.buffersize)
@@ -514,7 +535,7 @@ class MissionLink:
                     ):
                         seq += 1
                         ack = seq
-                        print("File name sent")
+                        print(f"[DEBUG] send: Nome do ficheiro confirmado (ACK recebido, seq={seq})")
                         break
                 except socket.timeout:
                     # Timeout ao aguardar ACK - retransmitir nome do ficheiro
@@ -590,6 +611,8 @@ class MissionLink:
             # If chunks is a string, only a packet with data is sent
             # The next one is a connection closing one
             if isinstance(chunks,str):
+                print(f"[DEBUG] send: Mensagem cabe num único pacote ({len(chunks)} bytes)")
+                print(f"[DEBUG] send: Enviando mensagem completa (seq={seq})")
                 self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks),(ip,port))
                 while True: 
                     try:
@@ -610,7 +633,9 @@ class MissionLink:
                             ):
                             seq += 1
                             ack = seq
+                            print(f"[DEBUG] send: ACK da mensagem recebido (seq={seq}), iniciando fechamento de conexão")
                             self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
+                            print(f"[DEBUG] send: FIN enviado (seq={seq}), aguardando FIN-ACK")
                             # Fechamento bidirecional completo (4-way handshake)
                             # Aguarda ACK do FIN enviado OU FIN do outro lado
                             while True:
@@ -636,7 +661,9 @@ class MissionLink:
                                             #          e incrementar o nosso próprio seq para o próximo pacote
                                             seq += 1
                                             ack = int(lista[seqPos])  # Reconhecer o seq do FIN recebido
+                                            print(f"[DEBUG] send: FIN recebido do outro lado, enviando FIN-ACK (seq={seq}, ack={ack})")
                                             self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
+                                            print(f"[DEBUG] send: Conexão fechada com sucesso")
                                             return True
                                         elif (lista[flagPos] == self.ackkey and 
                                               lista[ackPos] == str(seq) and
@@ -670,8 +697,10 @@ class MissionLink:
                         continue
             # In case the message is big enough, 
             # we must send each element of the list
+            print(f"[DEBUG] send: Mensagem dividida em {len(chunks)} chunks")
             i = 0
             while i != len(chunks):
+                print(f"[DEBUG] send: Enviando chunk {i+1}/{len(chunks)} (seq={seq}, tamanho={len(chunks[i])} bytes)")
                 self.sock.sendto(self.formatMessage(missionType,self.datakey,idMission,seq,ack,chunks[i]),(ip,port))
                 try:
                     response,(responseIp,responsePort) = self.sock.recvfrom(self.limit.buffersize)
@@ -686,8 +715,11 @@ class MissionLink:
                     ):
                         seq += 1
                         ack = seq
+                        print(f"[DEBUG] send: Chunk {i+1}/{len(chunks)} confirmado (ACK recebido, seq={seq})")
                         i += 1
                         continue
+                    else:
+                        print(f"[DEBUG] send: ACK inválido recebido - IP={responseIp} (esperado {ip}), Port={responsePort} (esperado {port}), ack={lista[ackPos] if len(lista) > ackPos else 'N/A'} (esperado {seq}), flag={lista[flagPos] if len(lista) > flagPos else 'N/A'}")
                 except socket.timeout:
                     # Timeout ao aguardar ACK - retransmitir chunk
                     print(f"[PACKET LOSS] Timeout ao aguardar ACK do chunk {i+1}/{len(chunks)} de {ip}:{port}")
@@ -717,6 +749,7 @@ class MissionLink:
                         lista[flagPos] == self.finkey and
                         lista[idMissionPos] == idMission  # Validação de segurança: verifica idMission
                     ):
+                        print(f"[DEBUG] send: FIN-ACK recebido, conexão fechada com sucesso")
                         return True                  
                 # Bug fix: Socket operations raise socket.timeout, not TimeoutError
                 #          Todos os outros timeout handlers neste ficheiro usam socket.timeout corretamente
@@ -746,10 +779,12 @@ class MissionLink:
         """
         message = ""
         # Establish connection, com timeout total de ~10s para não ficar infinito
+        print(f"[DEBUG] recv: Iniciando receção - aguardando handshake")
         start_wait = time.time()
         while True:
             try:
                 (ipDest,portDest),idAgent,seq,ack = self.acceptConnection()
+                print(f"[DEBUG] recv: Handshake concluído - idAgent={idAgent}, seq={seq}, ack={ack}, origem={ipDest}:{portDest}")
                 break
             except socket.timeout:
                 elapsed = time.time() - start_wait
@@ -774,11 +809,13 @@ class MissionLink:
                 # Usar lock para evitar race conditions com send()
                 with self.sock_lock:
                     firstMessage,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
-                print(f"[DEBUG] recv: Primeira mensagem recebida de {ip}:{port}")
+                print(f"[DEBUG] recv: Primeira mensagem recebida de {ip}:{port}, tamanho={len(firstMessage)} bytes")
                 lista = firstMessage.decode().split("|")
+                print(f"[DEBUG] recv: Mensagem parseada - flag={lista[0] if len(lista) > 0 else 'N/A'}, idMission={lista[1] if len(lista) > 1 else 'N/A'}, seq={lista[2] if len(lista) > 2 else 'N/A'}, missionType={lista[5] if len(lista) > 5 else 'N/A'}")
                 # Validar formato da mensagem
                 if len(lista) < 7:
                     # Mensagem malformada - ignorar e continuar
+                    print(f"[DEBUG] recv: Mensagem malformada (apenas {len(lista)} campos, esperado 7), ignorando")
                     firstMessage = None
                     continue
                 # Bug fix: Extrair idMission apenas quando a validação de IP/porta/seq passar
@@ -786,14 +823,17 @@ class MissionLink:
                 #          podemos extrair o idMission errado de um emissor diferente, causando rejeição de mensagens válidas
                 #          Solução: Extrair idMission apenas quando a validação completa passar (IP/porta/seq corretos)
                 #          Isto garante que idMission seja sempre do emissor correto
+                print(f"[DEBUG] recv: Validando primeira mensagem - IP esperado={ipDest}, recebido={ip}, Porta esperada={portDest}, recebida={port}, Seq esperado={seq+1}, recebido={lista[seqPos]}")
                 if (
                     ip == ipDest and 
                     port == portDest and
                     lista[seqPos] == str(seq + 1)
                 ):
+                    print(f"[DEBUG] recv: Validação passou!")
                     # Extrair idMission apenas quando validação completa passar
                     if idMission is None:
                         idMission = lista[idMissionPos]  # Extrai idMission da primeira mensagem válida
+                        print(f"[DEBUG] recv: idMission extraído: {idMission}")
                     # Bug fix: missionType deve ser atualizado sempre que uma mensagem válida é recebida
                     #          Se a primeira mensagem falhar na validação (linhas 615-619), missionType permanece ""
                     #          e quando o método retorna (linha 727 ou 816), passa "" em vez do tipo de mensagem real
@@ -820,6 +860,7 @@ class MissionLink:
                     #          mas NÃO resetar missionType - ele será atualizado quando uma mensagem válida for recebida
                     #          O problema é que missionType permanece "" se a primeira mensagem falhar,
                     #          mas isso é correto porque ainda não recebemos uma mensagem válida
+                    print(f"[DEBUG] recv: Validação falhou - IP/porta/seq não correspondem, ignorando mensagem")
                     firstMessage = None
             except socket.timeout:
                 firstMessage = None
@@ -848,11 +889,16 @@ class MissionLink:
                 message = ""
             
             # Catch packets until the fin packet arrives
+            print(f"[DEBUG] recv: Aguardando chunks adicionais ou FIN...")
+            chunk_count = 0
             while True:
                 # Try to receive a packet until timeout
                 try:
                     chunks, (ip,port) = self.sock.recvfrom(self.limit.buffersize)
+                    chunk_count += 1
+                    print(f"[DEBUG] recv: Chunk {chunk_count} recebido de {ip}:{port}, tamanho={len(chunks)} bytes")
                     lista = chunks.decode().split("|")
+                    print(f"[DEBUG] recv: Chunk parseado - flag={lista[0] if len(lista) > 0 else 'N/A'}, seq={lista[2] if len(lista) > 2 else 'N/A'}, esperado seq={seq+1}")
                     # When receiving a packet, the packet is accepted if:
                     # the length of the list is 7
                     # the mission id matches the connection's mission (se idMission já foi extraído)
@@ -871,10 +917,13 @@ class MissionLink:
                         # Se idMission ainda não foi extraído, extrair agora (primeira mensagem válida)
                         if idMission is None:
                             idMission = lista[idMissionPos]
+                            print(f"[DEBUG] recv: idMission extraído do chunk: {idMission}")
+                        print(f"[DEBUG] recv: Chunk válido recebido (seq={lista[seqPos]}, tamanho mensagem={len(lista[messagePos]) if len(lista) > messagePos else 0} bytes)")
                         # Estratégia anti-duplicação: escrever chunk anterior quando próximo chega
                         # Previne duplicação em caso de retransmissão
                         if prevMessage is not None:
                             message += prevMessage
+                            print(f"[DEBUG] recv: Chunk anterior adicionado à mensagem (tamanho total agora: {len(message)} bytes)")
                         prevMessage = lista[messagePos]
 
                         # Increase the seq num to the new value (+1)
@@ -886,12 +935,16 @@ class MissionLink:
 
                         #Check if the client send a connection closing message
                         if lista[flagPos] == self.finkey:
+                            print(f"[DEBUG] recv: FIN recebido! Mensagem completa tem {len(message)} bytes")
                             # Bug fix: Concatenar último chunk (prevMessage) antes de fechar conexão
                             #          para evitar perder o último chunk da mensagem
                             if prevMessage is not None:
                                 message += prevMessage
+                                print(f"[DEBUG] recv: Último chunk adicionado (tamanho final: {len(message)} bytes)")
+                            print(f"[DEBUG] recv: Enviando FIN-ACK (seq={seq})")
                             self.sock.sendto(self.formatMessage(None,self.finkey,idMission,seq,ack,self.eofkey),(ip,port))
                             # Aguardar ACK do FIN enviado para garantir fechamento robusto
+                            print(f"[DEBUG] recv: Aguardando ACK do FIN enviado")
                             while True:
                                 try:
                                     ack_response, (ack_ip, ack_port) = self.sock.recvfrom(self.limit.buffersize)
@@ -910,6 +963,7 @@ class MissionLink:
                                         #          Mas pode aparecer incorretamente devido a bugs anteriores ou retransmissões
                                         if message and message.endswith(self.eofkey):
                                             message = message[:-1]
+                                        print(f"[DEBUG] recv: ACK do FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: {len(message)} bytes)")
                                         return [idAgent,idMission,missionType,message,ip]
                                 except socket.timeout:
                                     # Reenvia FIN se não receber ACK
@@ -925,6 +979,7 @@ class MissionLink:
                         # Enviar ACK do chunk recebido
                         # Bug fix: ACK deve ter missionType=None, não o missionType do chunk recebido
                         #          Todos os outros ACKs no código usam None corretamente
+                        print(f"[DEBUG] recv: Enviando ACK do chunk (seq={seq})")
                         self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
                     
 
@@ -936,7 +991,8 @@ class MissionLink:
                 # So, to make sure, we sent the previous message that was supposed to be sent
                 except socket.timeout:
                     # Reenviar último ACK para solicitar retransmissão
-                    print(f"[PACKET LOSS] Timeout ao aguardar próximo chunk de {ip}:{port}")
+                    print(f"[PACKET LOSS] Timeout ao aguardar próximo chunk de {ip}:{port} (chunk {chunk_count+1})")
+                    print(f"[DEBUG] recv: Timeout - último seq recebido={seq}, último ack enviado={ack}")
                     print(f"[RETRANSMISSÃO] Reenviando último ACK para solicitar retransmissão para {ip}:{port}")
                     self.sock.sendto(self.formatMessage(None,self.ackkey,idMission,seq,ack,self.eofkey),(ip,port))
                     continue

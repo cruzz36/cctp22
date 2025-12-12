@@ -382,19 +382,27 @@ class NMS_Agent:
             mission_id = lista[1]
             
             # Validar formato da missão
+            print(f"[DEBUG] recvMissionLink: Validando missão {mission_id}...")
+            print(f"[DEBUG] recvMissionLink: Tipo da mensagem: {type(mission_message)}, tamanho: {len(str(mission_message))} bytes")
             is_valid, error_msg = validateMission(mission_message)
+            print(f"[DEBUG] recvMissionLink: Validação resultado: válida={is_valid}, erro={error_msg if not is_valid else 'N/A'}")
             
             if not is_valid:
+                print(f"[DEBUG] recvMissionLink: Missão inválida, enviando resposta 'invalid'")
                 self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, "invalid")
                 return None
             
             # Parse do JSON da missão
             try:
                 if isinstance(mission_message, str):
+                    print(f"[DEBUG] recvMissionLink: Fazendo parse do JSON (string)")
                     mission_data = json.loads(mission_message)
                 else:
+                    print(f"[DEBUG] recvMissionLink: Mensagem já é dicionário")
                     mission_data = mission_message
-            except json.JSONDecodeError:
+                print(f"[DEBUG] recvMissionLink: Parse bem-sucedido - mission_id={mission_data.get('mission_id', 'N/A')}, rover_id={mission_data.get('rover_id', 'N/A')}, task={mission_data.get('task', 'N/A')}")
+            except json.JSONDecodeError as e:
+                print(f"[DEBUG] recvMissionLink: Erro ao fazer parse do JSON: {e}")
                 self.missionLink.send(lista[4], self.missionLink.port, None, self.id, mission_id, "parse_error")
                 return None
             
