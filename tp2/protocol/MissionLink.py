@@ -399,61 +399,42 @@ class MissionLink:
         """
         print(f"[DEBUG] acceptConnection: Aguardando SYN...")
         # RECEBER O SYN
-        # NOTA: Usar lock APENAS durante recvfrom() para evitar race conditions
-        #       Mas libertar lock imediatamente após receber pacote para dar oportunidade ao startConnection()
+        # CRÍTICO: acceptConnection() só deve consumir pacotes SYN quando está à espera de SYN
+        #           Se consumir pacotes D (dados), SYN-ACK, ou ACK, impede que recv() e startConnection() os recebam
+        #           Como UDP não permite peek, usamos timeout muito curto e só processamos SYN
         original_timeout = self.sock.gettimeout()
-        # Timeout muito curto para não bloquear startConnection() - apenas verificar se há SYN
-        self.sock.settimeout(0.05)  # 50ms - muito curto para não interferir com startConnection()
+        # Timeout MUITO curto (10ms) para não bloquear recv() e startConnection() - apenas verificar se há SYN
+        self.sock.settimeout(0.01)  # 10ms - extremamente curto para não interferir com outras operações
         
         while True:
             try:
                 # Usar lock APENAS durante recvfrom(), não durante todo o processamento
                 with self.sock_lock:
                     message,(ip,port) = self.sock.recvfrom(self.limit.buffersize)
-                # Lock libertado aqui - startConnection() pode agora receber pacotes
-                print(f"[DEBUG] acceptConnection: Pacote recebido de {ip}:{port}")
+                # Lock libertado aqui - recv() e startConnection() podem agora receber pacotes
                 
                 lista = message.decode().split("|")
                 if len(lista) < 7:
-                    print(f"[DEBUG] acceptConnection: Mensagem malformada (apenas {len(lista)} campos), ignorando")
+                    # Mensagem malformada - ignorar e continuar
                     continue
                 flag = lista[flagPos]
-                print(f"[DEBUG] acceptConnection: Flag recebida: {flag}")
+                
+                # CRÍTICO: Só processar SYN. Todos os outros pacotes (D, SYN-ACK, ACK, FIN) devem ser ignorados
+                #          porque são destinados a recv() ou startConnection()
                 if flag == self.synkey:
                     print(f"[DEBUG] acceptConnection: SYN recebido de {ip}:{port}, idAgent={lista[idMissionPos]}")
                     # Restaurar timeout original antes de continuar
                     self.sock.settimeout(original_timeout)
                     print(f"[DEBUG] acceptConnection: SYN válido processado")
                     break
-                elif flag == self.synackkey:
-                    # SYN-ACK é para startConnection(), não para acceptConnection()
-                    # PROBLEMA: Já consumimos o pacote do socket, mas startConnection() precisa dele
-                    # SOLUÇÃO: Não fazer nada - o servidor vai reenviar SYN-ACK e startConnection() vai recebê-lo
-                    # Mas para dar mais oportunidade, usar timeout muito curto para não bloquear
-                    print(f"[DEBUG] acceptConnection: SYN-ACK recebido (é para startConnection()), ignorando - servidor vai reenviar")
-                    # Não fazer sleep - deixar startConnection() receber o próximo SYN-ACK rapidamente
-                    continue
-                elif flag == self.finkey:
-                    # FIN recebido - pode ser de uma conexão anterior que ainda está a fechar
-                    # Responder com ACK para ajudar a fechar a conexão
-                    print(f"[DEBUG] acceptConnection: FIN recebido de {ip}:{port} (pode ser de conexão anterior), respondendo com ACK")
-                    try:
-                        fin_seq = int(lista[seqPos]) if len(lista) > seqPos else 0
-                        fin_ack = int(lista[ackPos]) if len(lista) > ackPos else 0
-                        fin_idMission = lista[idMissionPos] if len(lista) > idMissionPos else "000"
-                        # Enviar ACK do FIN
-                        ack_response = self.formatMessage(None, self.ackkey, fin_idMission, fin_seq + 1, fin_seq, self.eofkey)
-                        self.sock.sendto(ack_response, (ip, port))
-                        print(f"[DEBUG] acceptConnection: ACK do FIN enviado para {ip}:{port}")
-                    except Exception as e:
-                        print(f"[DEBUG] acceptConnection: Erro ao processar FIN: {e}")
-                    continue
                 else:
-                    print(f"[DEBUG] acceptConnection: Flag desconhecida recebida: {flag}, ignorando")
+                    # NÃO É SYN - não processar, não fazer nada, simplesmente continuar
+                    # Este pacote foi consumido mas não é para nós - recv() ou startConnection() vão receber o próximo
+                    # Não fazer print para não poluir logs - apenas continuar
                     continue
             except socket.timeout:
-                # Timeout é normal e esperado - lock já foi libertado, então startConnection() pode receber SYN-ACK
-                # Não fazer sleep - deixar startConnection() ter oportunidade imediata
+                # Timeout é normal e esperado - lock já foi libertado, então recv() e startConnection() podem receber pacotes
+                # Não fazer sleep - deixar outras operações terem oportunidade imediata
                 continue
         
         # Restaurar timeout original
