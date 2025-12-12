@@ -29,7 +29,7 @@ def main():
     
     nms_ip = sys.argv[1]
     rover_id = sys.argv[2] if len(sys.argv) > 2 else "r1"
-    telemetry_interval = int(sys.argv[3]) if len(sys.argv) > 3 else 30  # Padrão: 30 segundos (telemetria contínua)
+    telemetry_interval = int(sys.argv[3]) if len(sys.argv) > 3 else 5  # Padrão: 5 segundos (telemetria contínua)
     
     print("="*60)
     print(f"ROVER {rover_id} - Iniciando...")

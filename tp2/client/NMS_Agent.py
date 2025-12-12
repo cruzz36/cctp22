@@ -5,6 +5,7 @@ import time
 import json
 import threading
 import math
+import random
 
 def validateMission(mission_data):
     """
@@ -236,7 +237,7 @@ class NMS_Agent:
         # Estado de monitorização contínua
         self.telemetry_thread = None  # Thread para monitorização contínua
         self.telemetry_running = False  # Flag para controlar loop
-        self.telemetry_interval = 30  # Intervalo padrão em segundos (conforme requisitos: telemetria contínua)
+        self.telemetry_interval = 5  # Intervalo padrão em segundos (telemetria a cada 5 segundos)
         self.current_mission = None  # Missão atualmente em execução
         self.mission_queue = []  # Fila de missões pendentes (rover executa uma de cada vez)
         self.mission_executing = False  # Flag para indicar se há missão em execução
@@ -461,28 +462,46 @@ class NMS_Agent:
             direction_deg = math.degrees(direction_rad)
             self.updateDirection(direction_deg)
         
-        # Simular movimento para a área da missão
-        steps_to_area = int(distance / 5.0) + 1  # Passos de 5 metros
+        # Simular movimento para a área da missão com mudanças pequenas
+        steps_to_area = int(distance / 2.0) + 1  # Passos de 2 metros (mais pequenos)
+        prev_x = current_x
+        prev_y = current_y
         for step in range(steps_to_area):
             if distance > 0.1:
-                # Mover gradualmente em direção ao centro
+                # Mover gradualmente em direção ao centro com mudanças pequenas (1-2 unidades)
                 progress = (step + 1) / steps_to_area
-                new_x = current_x + dx * progress
-                new_y = current_y + dy * progress
+                target_x = current_x + dx * progress
+                target_y = current_y + dy * progress
+                
+                # Mudanças incrementais pequenas
+                step_x = random.choice([-2, -1, 0, 1, 2]) if abs(target_x - prev_x) > 1 else 0
+                step_y = random.choice([-2, -1, 0, 1, 2]) if abs(target_y - prev_y) > 1 else 0
+                
+                new_x = prev_x + step_x
+                new_y = prev_y + step_y
+                
+                # Garantir que não ultrapassa o destino
+                if (dx > 0 and new_x > target_x) or (dx < 0 and new_x < target_x):
+                    new_x = prev_x
+                if (dy > 0 and new_y > target_y) or (dy < 0 and new_y < target_y):
+                    new_y = prev_y
+                    
                 self.updatePosition(new_x, new_y, 0.0)
+                prev_x = new_x
+                prev_y = new_y
             time.sleep(0.5)  # Pequeno delay para simular movimento
         
         # Chegou à área da missão - iniciar execução
         self.updateOperationalStatus("em missão")
         self.updateVelocity(2.0)  # Velocidade reduzida durante execução
         
-        # Calcular número de atualizações durante a missão (usar intervalo fixo de 30s)
+        # Calcular número de atualizações durante a missão (usar intervalo fixo de 5s)
         total_duration_seconds = duration_minutes * 60
-        update_interval_seconds = 30  # Intervalo fixo de 30 segundos (mesmo da telemetria contínua)
+        update_interval_seconds = 5  # Intervalo fixo de 5 segundos (mesmo da telemetria contínua)
         num_updates = max(1, int(total_duration_seconds / update_interval_seconds))
         
         # Executar missão com atualizações periódicas de posição e estado
-        # A telemetria contínua (30s) continua a correr em paralelo
+        # A telemetria contínua (5s) continua a correr em paralelo
         start_time = time.time()
         
         # Padrão de movimento dentro da área (exploração em grid)
@@ -490,6 +509,12 @@ class NMS_Agent:
         grid_steps_y = 5
         step_size_x = (x2 - x1) / grid_steps_x
         step_size_y = (y2 - y1) / grid_steps_y
+        
+        # Valores anteriores para mudanças incrementais pequenas
+        prev_x = self.position["x"]
+        prev_y = self.position["y"]
+        prev_battery = self.battery
+        prev_temperature = self.temperature
         
         for update_idx in range(num_updates):
             elapsed_time = time.time() - start_time
@@ -499,27 +524,47 @@ class NMS_Agent:
             grid_x = (update_idx % grid_steps_x)
             grid_y = (update_idx // grid_steps_x) % grid_steps_y
             
-            mission_x = x1 + grid_x * step_size_x
-            mission_y = y1 + grid_y * step_size_y
+            target_x = x1 + grid_x * step_size_x
+            target_y = y1 + grid_y * step_size_y
             
             # Garantir que está dentro dos limites
-            mission_x = max(x1, min(x2, mission_x))
-            mission_y = max(y1, min(y2, mission_y))
+            target_x = max(x1, min(x2, target_x))
+            target_y = max(y1, min(y2, target_y))
             
-            # Atualizar posição
-            self.updatePosition(mission_x, mission_y, 0.0)
+            # Atualizar posição com mudanças pequenas (1, 2 ou 0)
+            if abs(target_x - prev_x) > 0.1:
+                step_x = random.choice([-2, -1, 0, 1, 2])  # Mudança pequena
+                new_x = prev_x + step_x
+                new_x = max(x1, min(x2, new_x))  # Garantir dentro dos limites
+            else:
+                new_x = prev_x
+                
+            if abs(target_y - prev_y) > 0.1:
+                step_y = random.choice([-2, -1, 0, 1, 2])  # Mudança pequena
+                new_y = prev_y + step_y
+                new_y = max(y1, min(y2, new_y))  # Garantir dentro dos limites
+            else:
+                new_y = prev_y
             
-            # Atualizar bateria (diminui gradualmente)
-            battery_level = max(20.0, 100.0 - (elapsed_time / total_duration_seconds) * 30.0)
-            self.updateBattery(battery_level)
+            self.updatePosition(new_x, new_y, 0.0)
+            prev_x = new_x
+            prev_y = new_y
             
-            # Atualizar temperatura (aumenta ligeiramente durante operação)
-            temperature = 20.0 + (elapsed_time / total_duration_seconds) * 15.0
-            self.updateTemperature(temperature)
+            # Atualizar bateria com mudanças muito pequenas (0% ou 0.2%)
+            battery_change = random.choice([0.0, -0.2])  # Diminui muito lentamente
+            new_battery = max(20.0, prev_battery + battery_change)
+            self.updateBattery(new_battery)
+            prev_battery = new_battery
             
-            # NÃO enviar telemetria aqui - a telemetria contínua (30s) já faz isso
+            # Atualizar temperatura com mudanças pequenas (0.1°C ou 0.2°C)
+            temp_change = random.choice([0.0, 0.1, 0.2])  # Aumenta muito lentamente
+            new_temperature = min(35.0, prev_temperature + temp_change)
+            self.updateTemperature(new_temperature)
+            prev_temperature = new_temperature
             
-            # Aguardar até próxima atualização (intervalo fixo de 30s)
+            # NÃO enviar telemetria aqui - a telemetria contínua (5s) já faz isso
+            
+            # Aguardar até próxima atualização (intervalo fixo de 5s)
             if update_idx < num_updates - 1:
                 time.sleep(update_interval_seconds)
         
@@ -776,7 +821,7 @@ class NMS_Agent:
         # Normalizar para 0-360
         self.direction = float(direction) % 360.0
     
-    def startContinuousTelemetry(self, server_ip, interval_seconds=30):
+    def startContinuousTelemetry(self, server_ip, interval_seconds=5):
         """
         Inicia monitorização contínua de telemetria.
         Envia telemetria periodicamente em thread separada.
