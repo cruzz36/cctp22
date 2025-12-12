@@ -16,8 +16,17 @@ Intervalo de telemetria: 5 segundos
 [DEBUG] send: Enviando mensagem completa (seq=101)
 [DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
 [DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
-[DEBUG] send: FIN recebido do outro lado, enviando FIN-ACK (seq=103, ack=102)
-[DEBUG] send: Conexão fechada com sucesso
+[PACKET LOSS] Timeout ao aguardar FIN/ACK de 10.0.1.10:8080
+[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
+[DEBUG] send: Aguardando ACK do FIN enviado anteriormente...
+[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/10)
+[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 6/10)
+[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 9/10)
+[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[DEBUG] send: Não recebeu ACK do FIN após 10 tentativas, mas já enviou ACK do FIN recebido - conexão fechada
 [DEBUG] recv: Iniciando receção - aguardando handshake
 [DEBUG] acceptConnection: Aguardando SYN...
 [DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
@@ -43,14 +52,29 @@ Intervalo de telemetria: 5 segundos
 [DEBUG] recv: Chunk válido recebido (seq=102, tamanho mensagem=1 bytes)
 [DEBUG] recv: FIN recebido! Mensagem completa tem 10 bytes
 [DEBUG] recv: Último chunk adicionado (tamanho final: 11 bytes)
-[DEBUG] recv: Enviando FIN-ACK (seq=102)
-[DEBUG] recv: Aguardando ACK do FIN enviado
-[DEBUG] recv: ACK do FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 10 bytes)
+[DEBUG] recv: Enviando ACK do FIN recebido (seq=102, ack=102)
+[DEBUG] recv: Enviando nosso próprio FIN (seq=103)
+[DEBUG] recv: Aguardando ACK do nosso FIN enviado
+[DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 10 bytes)
 [INFO] Rover r1 conectado à Nave-Mãe 10.0.1.10
 [OK] Registado como r1 na Nave-Mãe 10.0.1.10
 [DEBUG] recvMissionLink: Aguardando mensagem...
 [DEBUG] recv: Iniciando receção - aguardando handshake
 [DEBUG] acceptConnection: Aguardando SYN...
+[OK] Telemetria contínua ativa (intervalo: 5s)
+============================================================
+Rover r1 pronto!
+============================================================
+
+Rover em operação. Aguardando missões...
+Pressione Ctrl+C para encerrar
+
+[INFO] Telemetria enviada para 10.0.1.10
+[DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
+[DEBUG] acceptConnection: Flag recebida: F
+[DEBUG] acceptConnection: FIN recebido de 10.0.1.10:8080 (pode ser de conexão anterior), respondendo com ACK
+[DEBUG] acceptConnection: ACK do FIN enviado para 10.0.1.10:8080
+[INFO] Telemetria enviada para 10.0.1.10
 [DEBUG] acceptConnection: Pacote recebido de 10.0.1.10:8080
 [DEBUG] acceptConnection: Flag recebida: S
 [DEBUG] acceptConnection: SYN recebido de 10.0.1.10:8080, idAgent=r1
@@ -74,78 +98,57 @@ Intervalo de telemetria: 5 segundos
 [DEBUG] recv: Chunk válido recebido (seq=102, tamanho mensagem=1 bytes)
 [DEBUG] recv: FIN recebido! Mensagem completa tem 159 bytes
 [DEBUG] recv: Último chunk adicionado (tamanho final: 160 bytes)
-[DEBUG] recv: Enviando FIN-ACK (seq=102)
-[DEBUG] recv: Aguardando ACK do FIN enviado
-[OK] Telemetria contínua ativa (intervalo: 5s)
-============================================================
-Rover r1 pronto!
-============================================================
-
-Rover em operação. Aguardando missões...
-Pressione Ctrl+C para encerrar
-
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[DEBUG] recv: Enviando ACK do FIN recebido (seq=102, ack=102)
+[DEBUG] recv: Enviando nosso próprio FIN (seq=103)
+[DEBUG] recv: Aguardando ACK do nosso FIN enviado
+[DEBUG] recv: ACK do nosso FIN recebido, conexão fechada. Retornando mensagem completa (tamanho: 159 bytes)
+[DEBUG] recvMissionLink: Mensagem recebida - missionType=T, idMission=M-001, idAgent=r1
+[DEBUG] recvMissionLink: É uma missão (taskRequest), processando...
+[DEBUG] recvMissionLink: Validando missão M-001...
+[DEBUG] recvMissionLink: Tipo da mensagem: <class 'str'>, tamanho: 159 bytes
+[DEBUG] recvMissionLink: Validação resultado: válida=True, erro=N/A
+[DEBUG] recvMissionLink: Fazendo parse do JSON (string)
+[DEBUG] recvMissionLink: Parse bem-sucedido - mission_id=M-001, rover_id=r1, task=capture_images
+[DEBUG] recvMissionLink: Missão M-001 armazenada, enviando confirmação...
+[DEBUG] send: Iniciando envio - missionType=None, idAgent=r1, idMission=M-001, tamanho=5 bytes, destino=10.0.1.10:8080
+[DEBUG] send: Iniciando handshake com 10.0.1.10:8080
+[DEBUG] startConnection: Iniciando handshake com 10.0.1.10:8080, idAgent=r1, retryLimit=5
+[DEBUG] startConnection: Enviando SYN (tentativa 1/5)
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 1/10)
 [INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 3/10)
 [INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 5/10)
 [INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 7/10)
 [INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[PACKET LOSS] Timeout ao aguardar SYN-ACK de 10.0.1.10:8080 (tentativa 8/10)
+[RETRANSMISSÃO] Reenviando SYN para 10.0.1.10:8080
+[DEBUG] startConnection: SYN-ACK recebido de 10.0.1.10:8080
+[DEBUG] startConnection: Enviando ACK para completar handshake
+[DEBUG] startConnection: Handshake concluído com sucesso - seq=101
+[DEBUG] send: Handshake concluído - seq=101, ack=101
+[DEBUG] send: Mensagem cabe num único pacote (5 bytes)
+[DEBUG] send: Enviando mensagem completa (seq=101)
+[DEBUG] send: ACK da mensagem recebido (seq=102), iniciando fechamento de conexão
+[DEBUG] send: FIN enviado (seq=102), aguardando FIN-ACK
+[DEBUG] send: FIN recebido do outro lado, enviando ACK (seq=103, ack=103)
+[DEBUG] send: Aguardando ACK do FIN enviado anteriormente...
 [INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
+[PACKET LOSS] Timeout ao aguardar ACK do FIN enviado (tentativa 3/10)
 [RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
+[DEBUG] send: ACK do FIN recebido, conexão fechada com sucesso
+[DEBUG] recvMissionLink: Confirmação enviada para 10.0.1.10:8080
+[INFO] Missão ID: M-001 recebida - iniciando execução
+[INFO] Executando missão M-001 (capture_images, 1min)
+[DEBUG] recvMissionLink: Aguardando mensagem...
+[DEBUG] recv: Iniciando receção - aguardando handshake
+[DEBUG] acceptConnection: Aguardando SYN...
 [INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[INFO] Telemetria enviada para 10.0.1.10
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
 [INFO] Telemetria enviada para 10.0.1.10
 ^C
 
 A encerrar Rover r1...
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
-[PACKET LOSS] Timeout ao aguardar ACK do FIN de 10.0.1.10:8080 (recv)
-[RETRANSMISSÃO] Reenviando FIN para 10.0.1.10:8080
 Monitorização contínua de telemetria parada
 Rover r1 encerrado.
 root@Rover1:/tmp/nms# 
