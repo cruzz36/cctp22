@@ -352,13 +352,13 @@ pip3 download --dest /home/core/pkgs psutil==5.9.0 flask==1.1.1 itsdangerous==1.
 tar -czf /home/core/pkgs.tgz -C /home/core pkgs
 
 
-sudo sh -c "cat /home/core/pkgs.tgz | vcmd -c /tmp/pycore.38885/NaveMae -- sh -c 'tar -xzf - -C /tmp && pip3 install --no-index --find-links /tmp/pkgs flask==1.1.1 itsdangerous==1.1.0 jinja2==2.10.1 markupsafe==1.1.1 werkzeug==0.16.1 click==7.0 psutil==5.9.0 requests==2.22.0'"
+sudo sh -c "cat /home/core/pkgs.tgz | vcmd -c /tmp/pycore.38475/NaveMae -- sh -c 'tar -xzf - -C /tmp && pip3 install --no-index --find-links /tmp/pkgs flask==1.1.1 itsdangerous==1.1.0 jinja2==2.10.1 markupsafe==1.1.1 werkzeug==0.16.1 click==7.0 psutil==5.9.0 requests==2.22.0'"
 
-     sudo sh -c "cat /home/core/pkgs.tgz | vcmd -c /tmp/pycore.38885/GroundControl -- sh -c 'tar -xzf - -C /tmp && pip3 install --no-index --find-links /tmp/pkgs flask==1.1.1 itsdangerous==1.1.0 jinja2==2.10.1 markupsafe==1.1.1 werkzeug==0.16.1 click==7.0 psutil==5.9.0 requests==2.22.0'"
+     sudo sh -c "cat /home/core/pkgs.tgz | vcmd -c /tmp/pycore.38475/GroundControl -- sh -c 'tar -xzf - -C /tmp && pip3 install --no-index --find-links /tmp/pkgs flask==1.1.1 itsdangerous==1.1.0 jinja2==2.10.1 markupsafe==1.1.1 werkzeug==0.16.1 click==7.0 psutil==5.9.0 requests==2.22.0'"
 
-     sudo sh -c "cat /home/core/pkgs.tgz | vcmd -c /tmp/pycore.38885/Rover1 -- sh -c 'tar -xzf - -C /tmp && pip3 install --no-index --find-links /tmp/pkgs flask==1.1.1 itsdangerous==1.1.0 jinja2==2.10.1 markupsafe==1.1.1 werkzeug==0.16.1 click==7.0 psutil==5.9.0 requests==2.22.0'"
+     sudo sh -c "cat /home/core/pkgs.tgz | vcmd -c /tmp/pycore.38475/Rover1 -- sh -c 'tar -xzf - -C /tmp && pip3 install --no-index --find-links /tmp/pkgs flask==1.1.1 itsdangerous==1.1.0 jinja2==2.10.1 markupsafe==1.1.1 werkzeug==0.16.1 click==7.0 psutil==5.9.0 requests==2.22.0'"
 
-     sudo sh -c "cat /home/core/pkgs.tgz | vcmd -c /tmp/pycore.38885/Rover2 -- sh -c 'tar -xzf - -C /tmp && pip3 install --no-index --find-links /tmp/pkgs flask==1.1.1 itsdangerous==1.1.0 jinja2==2.10.1 markupsafe==1.1.1 werkzeug==0.16.1 click==7.0 psutil==5.9.0 requests==2.22.0'"
+     sudo sh -c "cat /home/core/pkgs.tgz | vcmd -c /tmp/pycore.38475/Rover2 -- sh -c 'tar -xzf - -C /tmp && pip3 install --no-index --find-links /tmp/pkgs flask==1.1.1 itsdangerous==1.1.0 jinja2==2.10.1 markupsafe==1.1.1 werkzeug==0.16.1 click==7.0 psutil==5.9.0 requests==2.22.0'"
 
 
 Dentro do core

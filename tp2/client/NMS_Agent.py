@@ -522,12 +522,7 @@ class NMS_Agent:
                 next_thread.start()
             else:
                 # Não há mais missões na fila local - solicitar próxima missão à Nave-Mãe
-                # Parar telemetria antes de solicitar nova missão
-                if self.telemetry_running:
-                    self.stopContinuousTelemetry()
-                
-                # Pequeno delay para garantir que a última telemetria foi enviada
-                time.sleep(1)
+                # A telemetria contínua continua rodando indefinidamente (não deve ser parada)
                 
                 print(f"[INFO] Missão concluída - solicitando próxima missão à Nave-Mãe")
                 try:
