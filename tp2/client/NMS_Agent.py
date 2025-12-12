@@ -495,10 +495,9 @@ class NMS_Agent:
         self.updateOperationalStatus("em missão")
         self.updateVelocity(2.0)  # Velocidade reduzida durante execução
         
-        # Calcular número de atualizações durante a missão (usar intervalo fixo de 5s)
-        total_duration_seconds = duration_minutes * 60
+        # Calcular duração total em segundos
+        total_duration_seconds = float(duration_minutes) * 60.0
         update_interval_seconds = 5  # Intervalo fixo de 5 segundos (mesmo da telemetria contínua)
-        num_updates = max(1, int(total_duration_seconds / update_interval_seconds))
         
         # Executar missão com atualizações periódicas de posição e estado
         # A telemetria contínua (5s) continua a correr em paralelo
@@ -516,8 +515,15 @@ class NMS_Agent:
         prev_battery = self.battery
         prev_temperature = self.temperature
         
-        for update_idx in range(num_updates):
+        # Loop baseado em tempo real, não em número de iterações
+        update_idx = 0
+        while True:
             elapsed_time = time.time() - start_time
+            
+            # Verificar se a missão já terminou
+            if elapsed_time >= total_duration_seconds:
+                break
+            
             progress_percent = min(100, int((elapsed_time / total_duration_seconds) * 100))
             
             # Calcular posição atual na área (movimento em grid)
@@ -564,9 +570,16 @@ class NMS_Agent:
             
             # NÃO enviar telemetria aqui - a telemetria contínua (5s) já faz isso
             
+            # Incrementar índice para cálculo de grid
+            update_idx += 1
+            
+            # Calcular quanto tempo falta até a próxima atualização
+            next_update_time = start_time + (update_idx * update_interval_seconds)
+            sleep_time = max(0.1, next_update_time - time.time())
+            
             # Aguardar até próxima atualização (intervalo fixo de 5s)
-            if update_idx < num_updates - 1:
-                time.sleep(update_interval_seconds)
+            if sleep_time > 0:
+                time.sleep(min(sleep_time, update_interval_seconds))
         
         # Enviar telemetria final antes de concluir missão
         self.createAndSendTelemetry(server_ip)

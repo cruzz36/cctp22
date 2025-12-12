@@ -411,11 +411,22 @@ class NMS_Server:
                         continue
                     
                     # Verificar se já foi enviada e ainda está ativa (está em self.tasks)
-                    # NOTA: Se uma missão foi concluída e removida de tasks pela API,
-                    #       ela pode ser recarregada se necessário (ex: se o rover solicitar novamente)
-                    #       Mas se ainda está em tasks, significa que está ativa ou pendente, então não recarregar
+                    # Se está em tasks mas foi concluída (tem progresso "completed"), pode ser recarregada
                     if mission_id in self.tasks:
-                        continue  # Missão já enviada e ainda ativa/pendente, pular
+                        # Verificar se está concluída
+                        is_completed = False
+                        if mission_id in self.missionProgress:
+                            progress = self.missionProgress[mission_id]
+                            if isinstance(progress, dict) and rover_id in progress:
+                                rover_progress = progress[rover_id]
+                                if isinstance(rover_progress, dict):
+                                    status = rover_progress.get("status", "")
+                                    if status == "completed":
+                                        is_completed = True
+                        
+                        # Se não está concluída, pular (ainda está ativa)
+                        if not is_completed:
+                            continue
                     
                     # Verificar se já está na fila para evitar duplicados
                     already_in_queue = False
