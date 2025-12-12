@@ -173,6 +173,35 @@ def removeNulls(text):
             break
     return text
 
+def degreesToCardinalDirection(degrees):
+    """
+    Converte graus (0-360) em pontos cardeais (Norte, Sul, Este, Oeste).
+    
+    Conversão:
+    - Norte: 315-45° (ou seja, -45° a 45°)
+    - Este: 45-135°
+    - Sul: 135-225°
+    - Oeste: 225-315°
+    
+    Args:
+        degrees (float): Direção em graus (0-360, onde 0 = Norte)
+        
+    Returns:
+        str: Ponto cardeal ("Norte", "Sul", "Este", "Oeste")
+    """
+    # Normalizar para 0-360
+    degrees = float(degrees) % 360.0
+    
+    # Converter para pontos cardeais
+    if degrees >= 315 or degrees < 45:
+        return "Norte"
+    elif degrees >= 45 and degrees < 135:
+        return "Este"
+    elif degrees >= 135 and degrees < 225:
+        return "Sul"
+    else:  # 225 <= degrees < 315
+        return "Oeste"
+
 class NMS_Agent:
     """
     Classe que representa um agente/rover no sistema.
@@ -597,7 +626,7 @@ class NMS_Agent:
         # Adicionar campos opcionais
         telemetry["battery"] = self.battery
         telemetry["velocity"] = self.velocity
-        telemetry["direction"] = self.direction
+        telemetry["direction"] = degreesToCardinalDirection(self.direction)
         telemetry["temperature"] = self.temperature
         telemetry["system_health"] = self.system_health
         

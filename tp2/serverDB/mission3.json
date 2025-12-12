@@ -8,7 +8,6 @@
     "y2": 180.0
   },
   "task": "environmental_analysis",
-  "duration_minutes": 45,
-  "update_frequency_seconds": 180
+  "duration_minutes": 45
 }
 

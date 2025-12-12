@@ -166,8 +166,7 @@ class MissionLink:
                 "x1": float, "y1": float, "x2": float, "y2": float
             } (obrigatório, área geográfica a explorar),
             "task": string (obrigatório, tipo de tarefa: capture_images|sample_collection|environmental_analysis),
-            "duration_minutes": integer (obrigatório, > 0, tempo máximo para execução),
-            "update_frequency_seconds": integer (obrigatório, > 0, frequência de reporte de progresso)
+            "duration_minutes": integer (obrigatório, > 0, tempo máximo para execução)
         }
         
         Campos opcionais:
@@ -180,8 +179,7 @@ class MissionLink:
             "rover_id": "r1",
             "geographic_area": {"x1": 10.0, "y1": 20.0, "x2": 50.0, "y2": 60.0},
             "task": "capture_images",  ← Tipo de tarefa (um dos 3 possíveis)
-            "duration_minutes": 30,
-            "update_frequency_seconds": 120
+            "duration_minutes": 30
         }
         
         Args:

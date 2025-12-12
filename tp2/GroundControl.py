@@ -353,7 +353,11 @@ class GroundControl:
         
         direction = entry.get('direction')
         if direction is not None:
-            print(f"{indent}Direção:              {direction:.1f}°")
+            # Direção pode ser string (ponto cardeal) ou float (graus)
+            if isinstance(direction, str):
+                print(f"{indent}Direção:              {direction}")
+            else:
+                print(f"{indent}Direção:              {direction:.1f}°")
         
         temperature = entry.get('temperature')
         if temperature is not None:
