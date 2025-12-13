@@ -106,7 +106,6 @@ link l3 {
 }
 
 link l4 {
-    ber 1
     nodes {n5 n3}
     bandwidth 10000000
 }
